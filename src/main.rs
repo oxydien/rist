@@ -1,3 +1,4 @@
+use rocket::data::ToByteUnit;
 use state::State;
 
 #[macro_use]
@@ -26,7 +27,13 @@ async fn rocket() -> _ {
         let state = State::get().await.unwrap();
         figment = rocket::Config::figment()
             .merge(("port", state.config.server.port.clone()))
-            .merge(("address", state.config.server.host.clone()));
+            .merge(("address", state.config.server.host.clone()))
+            .merge((
+                "limits",
+                rocket::data::Limits::new()
+                    .limit("data-form", 10.gigabytes())
+                    .limit("file", 10.gigabytes()),
+            ));
     }
 
     println!("[DEBUG ] Running before_launch...");
@@ -34,7 +41,31 @@ async fn rocket() -> _ {
 
     // Launch rocket server
     println!("[DEBUG ] Launching server...");
-    rocket::custom(figment).mount("/", routes![])
+    rocket::custom(figment)
+        .register(
+            "/",
+            catchers![routes::catchers::not_found, routes::catchers::unauthorized],
+        )
+        .mount(
+            "/",
+            routes![
+                routes::index::index,
+                routes::index::index_style,
+                routes::index::global_style,
+                routes::index::poppins_font,
+                routes::index::authorization_page,
+                routes::index::authorization_style,
+                routes::index::dash,
+                routes::index::dash_style,
+                routes::index::dash_upload_file,
+                routes::index::upload_style,
+                routes::index::sha_js,
+                routes::api::authorize,
+                routes::upload::request_upload,
+                routes::upload::upload_file,
+                routes::upload::get_upload_status,
+            ],
+        )
 }
 
 async fn before_launch() {

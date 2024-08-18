@@ -1,0 +1,60 @@
+@font-face {
+  font-family: 'Poppins';
+  src: url('/assets/Poppins.ttf') format('truetype');
+}
+
+:root {
+  --background-color: #04020c;
+  --primary-color: #4e9cdc;
+  --secondary-color: #307cab;
+  --text-color: #fff;
+  --text-color-muted: #b8b9bd;
+  --contrast-color: #2d2c33;
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: 'Poppins', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.btn {
+  color: var(--text-color-muted);
+  text-decoration: none;
+  padding: 6px 7px;
+  outline: 1px solid var(--primary-color);
+  border: none;
+  border-radius: 5px;
+  font-weight: 600;
+  font-size: large;
+  transition: all 120ms ease-in-out;
+  cursor: pointer;
+}
+
+.btn.btn-primary {
+  background-color: var(--primary-color);
+  color: var(--background-color);
+  outline-width: 3px;
+}
+
+.btn:disabled,
+.btn:hover,
+.btn:focus-visible {
+  background-color: var(--secondary-color);
+  outline-color: var(--secondary-color);
+  color: var(--text-color);
+}
+
+.btn.btn-primary:disabled,
+.btn.btn-primary:hover,
+.btn.btn-primary:focus-visible {
+  background-color: var(--background-color);
+  outline-color: var(--secondary-color);
+  color: var(--primary-color);
+}

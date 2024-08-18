@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/assets/global.css" />
+    <link rel="stylesheet" href="/assets/index.css" />
+    <link rel="stylesheet" href="/assets/upload.css" />
+    <script type="text/javascript" src="/assets/sha.js"></script>
+    <title>Upload | RIST server</title>
+  </head>
+  <body>
+    <div class="ov-1"></div>
+    <div class="decs">
+      <div class="dec-1"></div>
+      <div class="dec-2"></div>
+    </div>
+    <main>
+      <h1>Upload</h1>
+      <form
+        action="/api/upload"
+        method="POST"
+        id="uploadForm"
+        enctype="multipart/form-data"
+      >
+        <input type="file" name="file" id="fileInput" />
+        <button class="btn btn-primary" type="submit" id="uploadBtn">
+          Upload
+        </button>
+      </form>
+      <div id="notice"></div>
+      <div id="output" title="Click to copy"></div>
+
+      <script>
+        /// # VARIABLES
+        // Get elements
+        const uploadBtn = document.getElementById("uploadBtn");
+        const output = document.getElementById("output");
+        const decs = document.querySelector(".decs");
+        const uploadForm = document.getElementById("uploadForm");
+        const fileInput = document.getElementById("fileInput");
+        const notice = document.getElementById("notice");
+        let currentOutput = document.createElement("div");
+
+        // Define upload states
+        const states = {
+          READY: 0,
+          PREPARING: 1,
+          READING_FILE: 2,
+          HASHING: 3,
+          REQUESTING: 4,
+          UPLOADING: 5,
+          DONE: 6,
+          FAILED: 7,
+        };
+        let currentState = states.READY;
+        const chunkSize = 512 * 1024; // 512KB; used for reading files in parallel
+        const intervalTime = 1000;
+        const notices = {
+          UPLOAD: "Please keep this tab open while the upload is in progress.",
+          ALREADY_UPLOADED: "File already uploaded.",
+          FAILED: "File upload to the server failed.",
+          DONE: "Upload complete!",
+        };
+        let uploadId = null;
+        let previousBytesUploaded = 0; // Used for speed calculations
+
+        /// # HANDY FUNCTIONS
+
+        function changeState(state) {
+          currentState = state;
+          switch (state) {
+            case states.READY:
+              uploadBtn.disabled = false;
+              fileInput.disabled = false;
+              uploadBtn.innerText = "Upload";
+              currentOutput = document.createElement("div");
+              output.appendChild(currentOutput);
+              break;
+
+            case states.PREPARING:
+              uploadBtn.disabled = true;
+              fileInput.disabled = true;
+              uploadId = null;
+              uploadBtn.innerText = "Preparing...";
+              notice.innerText = notices.UPLOAD;
+              break;
+
+            case states.READING_FILE:
+              decs.classList.add("loading");
+              uploadBtn.innerText = "Reading file for hash...";
+              break;
+
+            case states.HASHING:
+              decs.classList.add("loading");
+              uploadBtn.innerText = "Calculating hash...";
+              break;
+
+            case states.REQUESTING:
+              decs.classList.add("loading");
+              uploadBtn.innerText = "Requesting upload...";
+              break;
+
+            case states.UPLOADING:
+              uploadBtn.innerText = "Uploading...";
+              break;
+
+            case states.DONE:
+              uploadBtn.disabled = false;
+              fileInput.disabled = false;
+              uploadBtn.innerText = "Upload";
+              decs.classList.remove("loading");
+              changeState(states.READY);
+              break;
+
+            case states.FAILED:
+              uploadBtn.disabled = false;
+              fileInput.disabled = false;
+              uploadBtn.innerText = "Upload";
+              notice.innerText = notices.FAILED;
+              changeState(states.READY);
+              break;
+          }
+        }
+        changeState(states.READY);
+
+        /// # FILE UPLOAD
+
+        uploadForm.addEventListener("submit", async function (event) {
+          event.preventDefault();
+          if (currentState !== states.READY) return;
+          if (fileInput.files.length === 0) return;
+
+          changeState(states.PREPARING);
+
+          const file = fileInput.files[0];
+
+          let hashHex = "-";
+          // If the file is smaller than 1GB, send hash with the request
+          if (file.size < 1024 * 1024 * 1024) {
+            const hasher = new jsSHA("SHA-256", "ARRAYBUFFER");
+
+            changeState(states.READING_FILE);
+            await readFileInParallel(file, hasher);
+
+            hashHex = hasher.getHash("HEX");
+          }
+
+          uploadFile(file, hashHex);
+        });
+
+        const copyToClipboard = (ev) => {
+          const text = ev.target.innerText;
+          navigator.clipboard.writeText(text);
+          ev.target.innerText = "Copied to clipboard!";
+
+          setTimeout(() => {
+            ev.target.innerText = text;
+          }, 2000);
+        }
+
+        const uploadFile = (file, hashHex) => {
+          const fileSize = file.size;
+          const fileName = file.name;
+
+          // Prepare the JSON payload for the upload request
+          const payload = {
+            file_name: fileName,
+            file_size: fileSize,
+            file_hash: hashHex,
+            expires_at: 0,
+          };
+
+          changeState(states.REQUESTING);
+          console.log("Requesting upload...", payload);
+          // Send POST request to /api/upload/request
+          fetch("/api/upload/request", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          })
+            .then(async (response) => {
+              if (!response.ok) {
+                console.warn("Upload request failed.");
+                const resp = await response.text();
+                currentOutput.innerText = `Failed: ${resp}`;
+
+                throw new Error("Upload request failed.");
+              }
+              return await response.json();
+            })
+            .then((jsonResponse) => {
+              if (!jsonResponse.upload_id) {
+                console.warn("Upload request failed.");
+                currentOutput.innerText = `Failed: ${jsonResponse}`;
+                return;
+              }
+
+              uploadId = jsonResponse.upload_id;
+              currentOutput.addEventListener("click", (e) => copyToClipboard(e));
+              currentOutput.innerText = `${window.location.protocol}//${window.location.host}/f?u=${uploadId}`;
+
+              // If the file is approved, send POST request to /api/upload/{upload_id}
+              if (jsonResponse.approved) {
+                changeState(states.UPLOADING);
+
+                uploadBtn.innerHTML = `Uploading 0%... (-)`;
+
+                return fetch(`/api/upload/${uploadId}`, {
+                  method: "POST",
+                  body: file,
+                });
+              }
+
+              notice.innerHTML = notices.ALREADY_UPLOADED;
+              changeState(states.DONE);
+              
+              return null;
+            })
+            .then(async (uploadResponse) => {
+              if (uploadResponse === null) return;
+              if (uploadResponse.ok) {
+                changeState(states.DONE);
+                notice.innerHTML = notices.DONE;
+                return;
+              }
+              changeState(states.FAILED);
+              currentOutput.innerText = `Failed: ${await uploadResponse.text()}`;
+            })
+            .catch((error) => {
+              if (error === null) return;
+              if (currentState !== states.DONE) {
+                changeState(states.FAILED);
+                currentOutput.innerText = `Failed: ${error}`;
+                notice.innerHTML = notices.FAILED;
+              }
+              console.error("Error:", error);
+            });
+        };
+
+        const readFileInParallel = async (file, hasher, callback) => {
+          const chunkCount = Math.ceil(file.size / chunkSize);
+          const chunkPromises = [];
+
+          console.log("Reading file in parallel...", chunkCount);
+          for (let i = 0; i < chunkCount; i++) {
+            const start = i * chunkSize;
+            const end = Math.min(start + chunkSize, file.size);
+
+            // Push each chunk reading process as a promise
+            chunkPromises.push(readFileChunk(file, start, end, i));
+          }
+
+          // Wait for all chunks to be read in parallel
+          const chunkResults = await Promise.all(chunkPromises);
+
+          // Process chunks in order
+          console.log("Calculating hash...", chunkCount);
+          changeState(states.HASHING);
+          chunkResults.forEach(async ({ index, data }) => {
+            hasher.update(data);
+          });
+        };
+
+        const readFileChunk = (file, start, stop, index) => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = reject;
+
+            reader.onloadend = (ev) => {
+              if (ev.target.readyState == FileReader.DONE) {
+                resolve({ index, data: ev.target.result });
+              }
+            };
+
+            const blob = file.slice(start, stop);
+            reader.readAsArrayBuffer(blob);
+          });
+        };
+
+        const errorHandler = (error) => {
+          console.error("File Read Error:", error);
+        };
+
+        // Set interval to check upload status
+        setInterval(() => {
+          if (currentState === states.UPLOADING && uploadId) {
+            fetch(`/api/upload_status/${uploadId}`).then((response) => {
+              if (!response.ok) {
+                console.warn("Upload status request failed.");
+                return;
+              }
+              response.json().then((jsonResponse) => {
+                const bps =
+                  (jsonResponse.uploaded_bytes - previousBytesUploaded) /
+                  (intervalTime / 1000);
+
+                uploadBtn.innerHTML = `${jsonResponse.state} ${Math.floor(
+                  (jsonResponse.uploaded_bytes / jsonResponse.total_bytes) * 100
+                )}%... (${formatBytes(bps, 0)})`;
+                previousBytesUploaded = jsonResponse.uploaded_bytes;
+              });
+            });
+          }
+        }, intervalTime);
+
+        const formatBytes = (bytes, decimals = 2) => {
+          if (bytes === 0) return "-";
+
+          const k = 1024;
+          const dm = decimals < 0 ? 0 : decimals;
+          const sizes = ["B/s", "KB/s", "MB/s", "GB/s", "TB/s"];
+
+          const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+          return (
+            parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i]
+          );
+        };
+      </script>
+    </main>
+  </body>
+</html>

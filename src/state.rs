@@ -1,7 +1,7 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
-use crate::{config::Config, db::{file::FileDB, user::UserDB}};
-use tokio::sync::OnceCell;
+use crate::{config::Config, db::{file::FileDB, user::UserDB}, routes::upload::UploadStatusMap};
+use tokio::sync::{OnceCell, RwLock};
 
 static APP_STATE: OnceCell<Arc<State>> = OnceCell::const_new();
 pub struct State {
@@ -9,6 +9,7 @@ pub struct State {
    pub user_db: UserDB,
    pub config: Config,
    pub config_path: String,
+   pub upload_status: UploadStatusMap,
 }
 
 impl State {
@@ -41,13 +42,22 @@ impl State {
     let config_path = std::env::var("CONFIG_PATH").unwrap_or("./config.json".to_string());
     let config = Config::load(&config_path)?;
     let file_db = FileDB::init(&config.database.file_db_path).await?;
-    let user_db = UserDB::init(&config.database.user_db_path).await?;
+    let user_db: UserDB = UserDB::init(&config.database.user_db_path).await?;
+    let upload_status = Arc::new(RwLock::new(HashMap::new()));
 
     Ok(Arc::new(Self {
       file_db,
       user_db,
       config,
       config_path,
+      upload_status,
     }))
+  }
+
+  // Utils
+
+  pub async fn remove_upload_status(&self, uuid: &str) {
+    let mut upload_state = self.upload_status.write().await;
+    upload_state.remove(uuid);
   }
 }

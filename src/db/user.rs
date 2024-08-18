@@ -79,21 +79,51 @@ impl UserDB {
 
         Ok(())
     }
+
+    pub async fn get(&self, token: &str) -> Result<Option<User>, sqlx::Error> {
+        sqlx::query_as::<_, User>("SELECT * FROM Users WHERE token = ?")
+            .bind(token)
+            .fetch_optional(&self.pool)
+            .await
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum UserKind {
-    Admin,
-    User,
-    Guest,
-    YtOnly,
-    FileOnly,
+    Admin = 0,
+    User = 1,
+    Guest = 2,
+    YtOnly = 3,
+    FileOnly = 4,
+}
+
+impl UserKind {
+    pub fn as_u8(&self) -> u8 {
+        match self {
+            UserKind::Admin => 0,
+            UserKind::User => 1,
+            UserKind::Guest => 2,
+            UserKind::YtOnly => 3,
+            UserKind::FileOnly => 4,
+        }
+    }
+
+    pub fn from_u8(kind: u8) -> Self {
+        match kind {
+            0 => UserKind::Admin,
+            1 => UserKind::User,
+            2 => UserKind::Guest,
+            3 => UserKind::YtOnly,
+            4 => UserKind::FileOnly,
+            _ => UserKind::Guest,
+        }
+    }
 }
 
 #[derive(sqlx::FromRow)]
 pub struct User {
     pub id: i64,
     pub name: String,
-    pub kind: UserKind,
+    pub kind: u8,
     pub token: String,
 }
