@@ -43,6 +43,10 @@ body {
   outline-width: 3px;
 }
 
+.btn:disabled {
+  cursor: not-allowed;
+}
+
 .btn:disabled,
 .btn:hover,
 .btn:focus-visible {

@@ -363,8 +363,9 @@ pub async fn upload_file(
         .unwrap();
 
     // Remove from upload status
-    let mut status_map = state.upload_status.write().await;
-    status_map.remove(&uuid);
+    if state.upload_status.write().await.remove(&uuid).is_none() {
+        eprintln!("[WARN  ] Failed to remove upload status for UUID: {}", uuid);
+    }
 
     Ok(Json(UploadResponse {
         uuid,

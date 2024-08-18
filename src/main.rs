@@ -64,6 +64,7 @@ async fn rocket() -> _ {
                 routes::upload::request_upload,
                 routes::upload::upload_file,
                 routes::upload::get_upload_status,
+                routes::download::download_file,
             ],
         )
 }
