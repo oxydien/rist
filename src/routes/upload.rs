@@ -24,8 +24,6 @@ use crate::state::State;
 
 use super::{BaseRateLimitGuard, RateLimitGuard, StrictRateLimitGuard, TokenAuth};
 
-const UPLOAD_LIMIT_BYTES: usize = 16 * 1024 * 1024 * 1024;
-
 // MARK: Models
 #[derive(Serialize, Clone)]
 pub struct UploadStatus {
@@ -119,14 +117,6 @@ pub async fn request_upload<'r>(
         });
     }
 
-    if data.0.file_size > UPLOAD_LIMIT_BYTES as u64 {
-        return Err(UploadError {
-            uuid: None,
-            kind: UploadErrorKind::FileTooLarge,
-            status: Status::PayloadTooLarge,
-        });
-    }
-
     let state = match State::get().await {
         Ok(state) => state,
         Err(_) => {
@@ -137,6 +127,14 @@ pub async fn request_upload<'r>(
             })
         }
     };
+
+    if data.0.file_size > state.config.upload.max_size_bytes as u64 {
+        return Err(UploadError {
+            uuid: None,
+            kind: UploadErrorKind::FileTooLarge,
+            status: Status::PayloadTooLarge,
+        });
+    }
 
     // Check if the file already exists
     if let Some(existing_file) = state
@@ -274,7 +272,7 @@ pub async fn upload_file<'r>(
     };
 
     // Create the file
-    let save_path = "./files/";
+    let save_path = &state.config.upload.upload_location;
     if !Path::new(save_path).exists() {
         std::fs::create_dir_all(save_path).unwrap();
     }
@@ -292,12 +290,12 @@ pub async fn upload_file<'r>(
     let mut hasher = Sha256::new();
     let mut file_size: u64 = 0;
 
-    drop(state);
 
     // Loop through the file data and write it to the file
-    let mut stream = data.open(ByteUnit::from(UPLOAD_LIMIT_BYTES));
-    let mut buffer = [0u8; 8192];
+    let mut stream = data.open(ByteUnit::from(state.config.upload.max_size_bytes.clone()));
+    let mut buffer = [0u8; 8192]; // 8 KiB buffer
 
+    drop(state);
     loop {
         match stream.read(&mut buffer).await {
             Ok(0) => break, // End Of File

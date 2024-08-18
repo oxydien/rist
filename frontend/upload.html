@@ -202,6 +202,7 @@
 
               uploadId = jsonResponse.upload_id;
               currentOutput.addEventListener("click", (e) => copyToClipboard(e));
+              currentOutput.classList.remove("error");
               currentOutput.innerText = `${window.location.protocol}//${window.location.host}/f?u=${uploadId}`;
 
               // If the file is approved, send POST request to /api/upload/{upload_id}
@@ -234,9 +235,9 @@
             .catch((error) => {
               if (error === null) return;
               if (currentState !== states.DONE) {
-                changeState(states.FAILED);
-                currentOutput.innerText = `Failed: ${error}`;
+                currentOutput.innerText += ` - ${error}`;
                 currentOutput.classList.add("error");
+                changeState(states.FAILED);
                 notice.innerHTML = notices.FAILED;
               }
               console.error("Error:", error);

@@ -118,6 +118,17 @@ impl UserKind {
             _ => UserKind::Guest,
         }
     }
+
+    pub fn from_str(kind: &str) -> Self {
+        match kind {
+            "admin" => UserKind::Admin,
+            "user" => UserKind::User,
+            "guest" => UserKind::Guest,
+            "yt_only" => UserKind::YtOnly,
+            "file_only" => UserKind::FileOnly,
+            _ => UserKind::Guest,
+        }
+    }
 }
 
 #[derive(sqlx::FromRow)]
