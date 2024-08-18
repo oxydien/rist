@@ -23,7 +23,7 @@ form input[type=file] {
   font-size: large;
   color: var(--text-color-muted);
   border-radius: 5px;
-  background-color: #000000a8;
+  background-color: #00000078;
   border: 4px dashed var(--contrast-color);
 }
 
@@ -77,8 +77,20 @@ form input[type=file] {
   text-wrap: wrap;
   text-align: left;
   border-radius: 5px;
-  background-color: #000000a8;
+  background-color: #00000078;
   border: 4px solid var(--contrast-color);
+}
+
+#output > div:not(:empty):hover {
+  background-color: #000000dc;
+}
+
+#output > div:nth-child(2) {
+  border-color: var(--primary-color);
+}
+
+#output > div.error {
+  border-color: red;
 }
 
 @keyframes decsLoading {

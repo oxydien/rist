@@ -75,7 +75,7 @@
               fileInput.disabled = false;
               uploadBtn.innerText = "Upload";
               currentOutput = document.createElement("div");
-              output.appendChild(currentOutput);
+              output.prepend(currentOutput);
               break;
 
             case states.PREPARING:
@@ -236,6 +236,7 @@
               if (currentState !== states.DONE) {
                 changeState(states.FAILED);
                 currentOutput.innerText = `Failed: ${error}`;
+                currentOutput.classList.add("error");
                 notice.innerHTML = notices.FAILED;
               }
               console.error("Error:", error);

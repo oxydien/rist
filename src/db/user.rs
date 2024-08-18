@@ -88,7 +88,7 @@ impl UserDB {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum UserKind {
     Admin = 0,
     User = 1,
@@ -126,4 +126,28 @@ pub struct User {
     pub name: String,
     pub kind: u8,
     pub token: String,
+}
+
+impl User {
+    pub fn kind(&self) -> UserKind {
+        UserKind::from_u8(self.kind)
+    }
+
+    pub fn has_permissions_to(&self, kind: PermissionKind) -> bool {
+        match self.kind() {
+            UserKind::Admin => true,
+            UserKind::User => kind != PermissionKind::FileRemove,
+            UserKind::Guest => false,
+            UserKind::YtOnly => kind == PermissionKind::YoutubeDownload || kind == PermissionKind::MedalDownload,
+            UserKind::FileOnly => kind == PermissionKind::FileUpload,
+        }
+    }
+}
+
+#[derive(PartialEq)]
+pub enum PermissionKind {
+    FileUpload,
+    FileRemove,
+    YoutubeDownload,
+    MedalDownload,
 }

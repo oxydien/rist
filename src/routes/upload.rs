@@ -19,6 +19,7 @@ use tokio::{io::AsyncReadExt, sync::RwLock};
 use uuid::Uuid;
 
 use crate::db::file::FileState;
+use crate::db::user::PermissionKind;
 use crate::state::State;
 
 use super::{BaseRateLimitGuard, RateLimitGuard, StrictRateLimitGuard, TokenAuth};
@@ -110,11 +111,11 @@ pub async fn request_upload<'r>(
     auth: TokenAuth,
     data: Json<UploadRequest>,
 ) -> Result<Json<UploadRequestResponse>, UploadError> {
-    if auth.0.kind == 2 {
+    if !auth.0.has_permissions_to(PermissionKind::FileUpload) {
         return Err(UploadError {
             uuid: None,
             kind: UploadErrorKind::NoPermissions,
-            status: Status::Unauthorized,
+            status: Status::Forbidden,
         });
     }
 
@@ -209,11 +210,11 @@ pub async fn upload_file<'r>(
     let uuid = uuid_raw.to_string();
 
     // Check user permissions
-    if auth.0.kind == 2 {
+    if !auth.0.has_permissions_to(PermissionKind::FileUpload) {
         return Err(UploadError {
             uuid: Some(uuid.clone()),
             kind: UploadErrorKind::NoPermissions,
-            status: Status::Unauthorized,
+            status: Status::Forbidden,
         });
     }
 
@@ -381,7 +382,7 @@ pub async fn upload_file<'r>(
 #[get("/api/upload_status/<upload_id>")]
 pub async fn get_upload_status<'r>(
     _brt: RocketGovernor<'r, BaseRateLimitGuard>,
-    upload_id: String,
+    upload_id: &str,
 ) -> Result<Json<UploadStatus>, Status> {
     let state = match State::get().await {
         Ok(state) => state,
@@ -389,7 +390,7 @@ pub async fn get_upload_status<'r>(
     };
 
     let status_map = state.upload_status.read().await;
-    if let Some(status) = status_map.get(&upload_id) {
+    if let Some(status) = status_map.get(upload_id) {
         Ok(Json(status.clone()))
     } else {
         Err(Status::NotFound)
