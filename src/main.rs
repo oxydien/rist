@@ -1,4 +1,5 @@
 use rocket::data::ToByteUnit;
+use rocket_governor::rocket_governor_catcher;
 use state::State;
 
 #[macro_use]
@@ -44,7 +45,7 @@ async fn rocket() -> _ {
     rocket::custom(figment)
         .register(
             "/",
-            catchers![routes::catchers::not_found, routes::catchers::unauthorized],
+            catchers![routes::catchers::not_found, routes::catchers::unauthorized, rocket_governor_catcher],
         )
         .mount(
             "/",

@@ -8,6 +8,7 @@ use rocket::http::{Header, Status};
 use rocket::serde::json::Json;
 use rocket::Data;
 use rocket::{post, response, Request, Response};
+use rocket_governor::RocketGovernor;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::io::Cursor;
@@ -20,7 +21,7 @@ use uuid::Uuid;
 use crate::db::file::FileState;
 use crate::state::State;
 
-use super::TokenAuth;
+use super::{BaseRateLimitGuard, RateLimitGuard, StrictRateLimitGuard, TokenAuth};
 
 const UPLOAD_LIMIT_BYTES: usize = 16 * 1024 * 1024 * 1024;
 
@@ -104,7 +105,8 @@ impl<'r, 'o: 'r> response::Responder<'r, 'o> for UploadError {
 
 // MARK: Upload Request
 #[post("/api/upload/request", format = "json", data = "<data>")]
-pub async fn request_upload(
+pub async fn request_upload<'r>(
+    _rt: RocketGovernor<'r, RateLimitGuard>,
     auth: TokenAuth,
     data: Json<UploadRequest>,
 ) -> Result<Json<UploadRequestResponse>, UploadError> {
@@ -198,7 +200,8 @@ pub async fn request_upload(
 
 // MARK: Upload File
 #[post("/api/upload/<uuid_raw>", data = "<data>")]
-pub async fn upload_file(
+pub async fn upload_file<'r>(
+    _srt: RocketGovernor<'r, StrictRateLimitGuard>,
     auth: TokenAuth,
     uuid_raw: &str,
     data: Data<'_>,
@@ -376,7 +379,10 @@ pub async fn upload_file(
 
 // MARK: Get Upload Status
 #[get("/api/upload_status/<upload_id>")]
-pub async fn get_upload_status(upload_id: String) -> Result<Json<UploadStatus>, Status> {
+pub async fn get_upload_status<'r>(
+    _brt: RocketGovernor<'r, BaseRateLimitGuard>,
+    upload_id: String,
+) -> Result<Json<UploadStatus>, Status> {
     let state = match State::get().await {
         Ok(state) => state,
         Err(_) => return Err(Status::InternalServerError),

@@ -3,6 +3,7 @@ use rocket::{
     request::{FromRequest, Outcome},
     Request,
 };
+use rocket_governor::{Quota, RocketGovernable};
 
 use crate::{db::user::User, state::State};
 
@@ -44,5 +45,27 @@ impl<'r> FromRequest<'r> for TokenAuth {
             },
             None => Outcome::Error((Status::Unauthorized, AuthError::Missing)),
         }
+    }
+}
+
+pub struct BaseRateLimitGuard;
+pub struct RateLimitGuard;
+pub struct StrictRateLimitGuard;
+
+impl<'r> RocketGovernable<'r> for BaseRateLimitGuard {
+    fn quota(_method: rocket_governor::Method, _route_name: &str) -> Quota {
+        Quota::per_minute(Self::nonzero(70))
+    }
+}
+
+impl<'r> RocketGovernable<'r> for RateLimitGuard {
+    fn quota(_method: rocket_governor::Method, _route_name: &str) -> Quota {
+        Quota::per_minute(Self::nonzero(10))
+    }
+}
+
+impl<'r> RocketGovernable<'r> for StrictRateLimitGuard {
+    fn quota(_method: rocket_governor::Method, _route_name: &str) -> Quota {
+        Quota::per_minute(Self::nonzero(2))
     }
 }

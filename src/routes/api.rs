@@ -1,21 +1,27 @@
 use rocket::http::Status;
-use serde::{Deserialize, Serialize};
 use rocket::serde::json::Json;
+use rocket_governor::RocketGovernor;
+use serde::{Deserialize, Serialize};
 
 use crate::{db::user::User, state};
 
+use super::StrictRateLimitGuard;
+
 #[derive(Deserialize, FromForm)]
 pub struct AuthorizeRequest {
-  pub token: String,
+    pub token: String,
 }
 
 #[derive(Serialize)]
 pub struct AuthorizeResponse {
-  role: u8
+    role: u8,
 }
 
 #[post("/api/authorize", format = "json", data = "<data>")]
-pub async fn authorize(data: Json<AuthorizeRequest>) -> Result<Json<AuthorizeResponse>, Status> {
+pub async fn authorize<'r>(
+    _srt: RocketGovernor<'r, StrictRateLimitGuard>,
+    data: Json<AuthorizeRequest>,
+) -> Result<Json<AuthorizeResponse>, Status> {
     let user = match check_auth(&data.0.token).await {
         Ok(user) => user,
         Err(status) => return Err(status),

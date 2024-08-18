@@ -81,6 +81,7 @@
             case states.PREPARING:
               uploadBtn.disabled = true;
               fileInput.disabled = true;
+              document.title = "Uploading... | RIST server";
               uploadId = null;
               uploadBtn.innerText = "Preparing...";
               notice.innerText = notices.UPLOAD;
@@ -110,6 +111,7 @@
               fileInput.disabled = false;
               uploadBtn.innerText = "Upload";
               decs.classList.remove("loading");
+              document.title = "Upload finished! | RIST server";
               changeState(states.READY);
               break;
 

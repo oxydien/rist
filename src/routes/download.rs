@@ -5,8 +5,11 @@ use rocket::{
     response::{self, content::RawHtml},
     Request, Response,
 };
+use rocket_governor::RocketGovernor;
 
 use crate::state::State;
+
+use super::RateLimitGuard;
 
 pub struct DownloadResponse {
     pub found: bool,
@@ -55,7 +58,10 @@ impl<'r, 'o: 'r> response::Responder<'r, 'o> for DownloadResponse {
 }
 
 #[get("/f?<u>")]
-pub async fn download_file(u: String) -> DownloadResponse {
+pub async fn download_file<'r>(
+    _rt: RocketGovernor<'r, RateLimitGuard>,
+    u: String,
+) -> DownloadResponse {
     let state = match State::get().await {
         Ok(state) => state,
         Err(_) => {
