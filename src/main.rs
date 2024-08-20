@@ -14,6 +14,8 @@ pub mod utils;
 #[launch]
 async fn rocket() -> _ {
     println!("[INFO  ] Starting {}", env!("CARGO_PKG_NAME"));
+    println!("[INFO  ] Version: {}", env!("CARGO_PKG_VERSION"));
+    println!("[INFO  ] TIME check: {}", utils::get_current_timestamp());
 
     // Setup main state
     let _ = state::State::init().await.map_err(|e| {
@@ -61,11 +63,15 @@ async fn rocket() -> _ {
                 routes::index::dash_upload_file,
                 routes::index::upload_style,
                 routes::index::sha_js,
+                routes::index::youtube_page,
+                routes::index::youtube_style,
                 routes::api::authorize,
                 routes::upload::request_upload,
                 routes::upload::upload_file,
                 routes::upload::get_upload_status,
                 routes::download::download_file,
+                routes::youtube::youtube_request,
+                routes::youtube::youtube_download,
             ],
         )
 }

@@ -1,0 +1,97 @@
+
+
+form {
+  display: grid;
+  grid-template: "url url url" "format quality button";
+  margin: 15px auto;
+  gap: 10px;
+}
+
+#url {
+  grid-area: url;
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  border: 2px solid var(--primary-color);
+  background-color: #00000078;
+  color: var(--text-color);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.option {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 5px;
+}
+
+.option.format {
+  grid-area: format;
+}
+
+.option.quality {
+  grid-area: quality;
+}
+
+.option select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  border: 2px solid var(--primary-color);
+  background-color: #00000078;
+  color: var(--text-color);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+#download-btn {
+  grid-area: button;
+}
+
+#output {
+  display: flex;
+  flex-flow: column-reverse nowrap;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 15px 0;
+}
+
+#output>div {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 63px;
+  padding: 10px;
+  border-radius: 5px;
+  border: 2px solid var(--contrast-color);
+  background-color: #00000078;
+  color: var(--text-color);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+#output>div>a:not(.btn) {
+  min-width: 15ch;
+  color: var(--primary-color);
+}
+
+#output>div.error {
+  border: 2px solid red;
+}
+
+@media screen and (max-width: 500px) {
+  form {
+    grid-template: "url url" "format quality" "button button";
+  }
+}
+
+@media screen and (max-width: 350px) {
+  form {
+    display: flex;
+    flex-flow: column nowrap;
+  }
+}

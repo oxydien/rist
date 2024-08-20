@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/assets/global.css" />
+    <link rel="stylesheet" href="/assets/index.css" />
+    <link rel="stylesheet" href="/assets/youtube.css" />
+    <title>Youtube downloader | RIST server</title>
+  </head>
+  <body>
+    <div class="ov-1"></div>
+    <div class="dec-1"></div>
+    <div class="dec-2"></div>
+    <main>
+      <h1 style="font-size: 2.4rem;">Youtube downloader</h1>
+      <p style="font-size: 1.2rem;">Enter the link of the video you want to download</p>
+      <form action="/youtube" id="download-form" method="POST">
+        <input
+          type="text"
+          name="url"
+          id="url"
+          placeholder="Enter the link here..."
+        />
+        <div class="option format">
+          <label for="formatSel">File format</label>
+          <select name="format" id="formatSel">
+            <option value="AudioMp3">MP3</option>
+            <option value="Video">MP4 (webp)</option>
+            <option value="AudioWav">Wav</option>
+          </select>
+        </div>
+        <div class="option quality">
+          <label for="qualitySel">Quality</label>
+          <select name="quality" id="qualitySel">
+            <option value="Worst">Low (worst 144p)</option>
+            <option value="Medium">Medium (~720p)</option>
+            <option value="High">High (~1080p)</option>
+            <option value="Best">Best (best found)</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" type="submit" id="download-btn">
+          Download
+        </button>
+      </form>
+      <div id="notice"></div>
+      <div id="output"></div>
+      <script>
+        const form = document.getElementById("download-form");
+        const url = document.getElementById("url");
+        const formatSel = document.getElementById("formatSel");
+        const qualitySel = document.getElementById("qualitySel");
+        const downloadBtn = document.getElementById("download-btn");
+        const notice = document.getElementById("notice");
+        const output = document.getElementById("output");
+
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          downloadBtn.disabled = true;
+          notice.innerHTML = "";
+          const urlValue = url.value;
+          if (!urlValue) {
+            notice.innerHTML = "Please enter a valid link";
+            return;
+          }
+
+          await downloadYoutube(urlValue, formatSel.value, qualitySel.value)
+        });
+
+        async function requestYoutube(url, format, quality, statusEl) {
+          const response = await fetch(`/api/youtube/request?url=${url}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              kind: format,
+              quality: quality,
+            }),
+          });
+
+          if (!response.ok) {
+            notice.innerHTML = "Check the console for details.";
+            statusEl.innerText = "Failed...";
+
+            console.warn("Request failed for:", url, ", server response:", await response.text());
+            return;
+          }
+
+          const data = await response.json();
+          if (data.error) {
+            notice.innerHTML = data.error;
+            return;
+          }
+
+          return data;
+        }
+
+        async function downloadYoutube(url, format, quality) {
+          const outputEl = document.createElement("div");
+          const link = document.createElement("a");
+          const formatEl = document.createElement("span");
+          const qualityEl = document.createElement("span");
+          const btn = document.createElement("a");
+
+          link.innerText = "Requesting...";
+          link.href = url;
+          link.target = "_blank";
+          formatEl.innerText = format;
+          qualityEl.innerText = quality;
+          btn.classList.add("btn");
+          btn.setAttribute("disabled", true);
+
+          outputEl.appendChild(link);
+          outputEl.appendChild(formatEl);
+          outputEl.appendChild(qualityEl);
+          outputEl.appendChild(btn);
+
+          output.appendChild(outputEl);
+
+          const data = await requestYoutube(url, format, quality, link);
+          downloadBtn.disabled = false;
+
+
+          if (!data) {
+            link.innerText = "Request failed";
+            outputEl.classList.add("error");
+            return;
+          }
+          if (data.error) {
+            notice.innerHTML = data.error;
+            link.innerText = "Request failed";
+            outputEl.classList.add("error");
+            return;
+          }
+          if (!data.found) {
+            link.innerText = "Video not found";
+            outputEl.classList.add("error");
+            return;
+          }
+          const uuid = data.uuid;
+
+          link.innerText = "Downloading...";
+
+          const res = await fetch(`/api/youtube/download/${uuid}`);
+
+          if (!res.ok) {
+            link.innerText = "Download failed";
+            outputEl.classList.add("error");
+            console.warn("Download failed for:", url, ", server response:", await res.text());
+            return;
+          }
+
+          const filename = res.headers
+            .get("Content-Disposition")
+            .split(";")
+            .find((n) => n.includes("filename="))
+            .replace("filename=", "")
+            .trim();
+
+          link.innerText = "Ready!";
+            
+          const blob = await res.blob();
+          const outputUrl = URL.createObjectURL(blob);
+          btn.href = outputUrl;
+          btn.download = filename;
+          btn.innerText = "↧";
+        }
+      </script>
+    </main>
+  </body>
+</html>

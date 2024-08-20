@@ -133,7 +133,7 @@ impl UserKind {
 
 #[derive(sqlx::FromRow)]
 pub struct User {
-    pub id: i64,
+    pub id: u16,
     pub name: String,
     pub kind: u8,
     pub token: String,

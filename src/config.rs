@@ -19,6 +19,7 @@ pub struct Config {
 pub struct DatabaseConfig {
     pub file_db_path: String,
     pub user_db_path: String,
+    pub video_db_path: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -82,6 +83,7 @@ impl Config {
             database: DatabaseConfig {
                 file_db_path: String::from("db/files.db"),
                 user_db_path: String::from("db/users.db"),
+                video_db_path: String::from("db/videos.db"),
             },
             server: ServerConfig {
                 host: String::from("0.0.0.0"),
@@ -115,6 +117,8 @@ impl Config {
                             db_value["file_db_path"].as_str().unwrap_or("").to_string();
                         self.database.user_db_path =
                             db_value["user_db_path"].as_str().unwrap_or("").to_string();
+                        self.database.video_db_path =
+                            db_value["video_db_path"].as_str().unwrap_or("").to_string();
                     }
                 }
                 "server" => {

@@ -1,12 +1,13 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::{config::Config, db::{file::FileDB, user::UserDB}, routes::upload::UploadStatusMap};
+use crate::{config::Config, db::{file::FileDB, user::UserDB, video::VideoDB}, routes::upload::UploadStatusMap};
 use tokio::sync::{OnceCell, RwLock};
 
 static APP_STATE: OnceCell<Arc<State>> = OnceCell::const_new();
 pub struct State {
    pub file_db: FileDB,
    pub user_db: UserDB,
+   pub video_db: VideoDB,
    pub config: Config,
    pub config_path: String,
    pub upload_status: UploadStatusMap,
@@ -42,12 +43,14 @@ impl State {
     let config_path = std::env::var("CONFIG_PATH").unwrap_or("./config.json".to_string());
     let config = Config::load(&config_path)?;
     let file_db = FileDB::init(&config.database.file_db_path).await?;
-    let user_db: UserDB = UserDB::init(&config.database.user_db_path).await?;
+    let user_db = UserDB::init(&config.database.user_db_path).await?;
+    let video_db = VideoDB::init(&config.database.video_db_path).await?;
     let upload_status = Arc::new(RwLock::new(HashMap::new()));
 
     Ok(Arc::new(Self {
       file_db,
       user_db,
+      video_db,
       config,
       config_path,
       upload_status,
