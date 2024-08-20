@@ -9,7 +9,7 @@ pub fn get_directory_from_path(path: &str) -> Option<String> {
 }
 
 pub fn get_current_timestamp() -> u64 {
-    std::time::SystemTime::now().elapsed().unwrap().as_secs()
+    std::time::SystemTime::UNIX_EPOCH.elapsed().unwrap().as_secs()
 }
 
 pub fn get_filename_from_path(path: &str) -> Option<String> {
