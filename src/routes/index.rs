@@ -67,3 +67,8 @@ pub async fn youtube_page<'r>(_brl: RocketGovernor<'r, BaseRateLimitGuard>, _aut
 pub async fn youtube_style<'r>(_brl: RocketGovernor<'r, BaseRateLimitGuard>, _auth: TokenAuth) -> Option<NamedFile> {
   NamedFile::open("frontend/youtube.css").await.ok()
 }
+
+#[get("/dash/medal")]
+pub async fn medal_page<'r>(_brl: RocketGovernor<'r, BaseRateLimitGuard>, _auth: TokenAuth) -> Option<NamedFile> {
+  NamedFile::open("frontend/medal.html").await.ok()
+}

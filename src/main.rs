@@ -65,6 +65,7 @@ async fn rocket() -> _ {
                 routes::index::sha_js,
                 routes::index::youtube_page,
                 routes::index::youtube_style,
+                routes::index::medal_page,
                 routes::api::authorize,
                 routes::upload::request_upload,
                 routes::upload::upload_file,
@@ -72,6 +73,7 @@ async fn rocket() -> _ {
                 routes::download::download_file,
                 routes::youtube::youtube_request,
                 routes::youtube::youtube_download,
+                routes::medal::download_medal_clip,
             ],
         )
 }

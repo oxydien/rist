@@ -17,3 +17,5 @@ sqlx = { git = "https://github.com/launchbadge/sqlx.git", rev = "352b02de6af70f1
 sha2 = "0.10.8"
 hex = "0.4.3"
 uuid = { version = "1.10.0", features = ["v4"] }
+reqwest = "0.12.7"
+regex = "1.10.6"

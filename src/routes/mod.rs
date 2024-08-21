@@ -13,6 +13,7 @@ pub mod download;
 pub mod index;
 pub mod upload;
 pub mod youtube;
+pub mod medal;
 
 pub struct TokenAuth(User);
 
