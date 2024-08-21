@@ -37,7 +37,7 @@ You have to first obtain the `docker-compose.yaml` file. You can download it fro
 or
 
 ```sh
-curl -o docker-compose.yaml https://raw.githubusercontent.com/oxydien/rist/main/tree/docker-compose.yaml
+curl -o docker-compose.yaml https://raw.githubusercontent.com/oxydien/rist/main/docker-compose.yaml
 ```
 
 Then simply launch the composer:
