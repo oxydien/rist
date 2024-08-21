@@ -1,4 +1,5 @@
 use std::path::Path;
+use sqlx::Row;
 use serde::Serialize;
 use sqlx::{migrate::MigrateDatabase, Sqlite, SqlitePool};
 
@@ -19,9 +20,9 @@ impl FileDB {
         let sqlite_path = format!("sqlite://{}", path);
 
         if !Sqlite::database_exists(&sqlite_path).await.unwrap_or(false) {
-            println!("Creating database {}", sqlite_path);
+            println!("[DEBUG ] Creating database {}", sqlite_path);
             match Sqlite::create_database(&sqlite_path).await {
-                Ok(_) => println!("[INFO  ] Create db success"),
+                Ok(_) => println!("[DEBUG ] Create db success"),
                 Err(error) => panic!("[ERROR ] Could not create new FileDB database: {}", error),
             }
         }
@@ -117,6 +118,20 @@ impl FileDB {
             .execute(&self.pool)
             .await
             .map(|_| ())
+    }
+
+    pub async fn get_expired_files(&self) -> Result<Vec<File>, sqlx::Error> {
+        sqlx::query_as::<_, File>("SELECT * FROM Files WHERE expires_at < ? AND expires_at <> 0")
+            .bind(utils::get_current_timestamp() as i64)
+            .fetch_all(&self.pool)
+            .await
+    }
+
+    pub async fn get_paths(&self) -> Result<Vec<String>, sqlx::Error> {
+        sqlx::query("SELECT path FROM Files")
+            .fetch_all(&self.pool)
+            .await
+            .map(|rows| rows.into_iter().map(|row| row.get(0)).collect())
     }
 }
 

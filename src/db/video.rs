@@ -1,7 +1,7 @@
-use std::path::Path;
-
 use serde::Deserialize;
+use sqlx::Row;
 use sqlx::{migrate::MigrateDatabase, Sqlite, SqlitePool};
+use std::path::Path;
 
 use crate::utils;
 
@@ -21,7 +21,7 @@ impl VideoDB {
         if !Sqlite::database_exists(&sqlite_path).await.unwrap_or(false) {
             println!("[DEBUG ] Creating database {}", sqlite_path);
             match Sqlite::create_database(&sqlite_path).await {
-                Ok(_) => println!("[INFO  ] Create db success"),
+                Ok(_) => println!("[DEBUG ] Create db success"),
                 Err(error) => panic!("[ERROR ] Could not create new VideoDB database: {}", error),
             }
         }
@@ -108,6 +108,44 @@ impl VideoDB {
             .bind(uuid)
             .fetch_optional(&self.pool)
             .await
+    }
+
+    pub async fn get_expired_videos(&self) -> Result<Vec<Video>, sqlx::Error> {
+        sqlx::query_as::<_, Video>("SELECT * FROM Videos WHERE expires_at < ? AND expires_at <> 0")
+            .bind(utils::get_current_timestamp() as i64)
+            .fetch_all(&self.pool)
+            .await
+    }
+
+    pub async fn remove_by_uuid(&self, uuid: &str) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM Videos WHERE uuid = ?")
+            .bind(uuid)
+            .execute(&self.pool)
+            .await
+            .map(|_| ())
+    }
+
+    pub async fn get_paths(&self) -> Result<Vec<String>, sqlx::Error> {
+        sqlx::query("SELECT path FROM Videos")
+            .fetch_all(&self.pool)
+            .await
+            .map(|rows| rows.into_iter().map(|row| row.get(0)).collect())
+    }
+
+    pub async fn update_data(&self, uuid: &str, video: &Video) -> Result<(), sqlx::Error> {
+        sqlx::query("UPDATE Videos SET vid_id = ?, name = ?, format = ?, quality = ?, path = ?, created = ?, expires_at = ?, user = ? WHERE uuid = ?")
+            .bind(video.vid_id.to_string())
+            .bind(video.name.to_string())
+            .bind(video.format)
+            .bind(video.quality)
+            .bind(video.path.to_string())
+            .bind(video.created.to_string())
+            .bind(video.expires_at.to_string())
+            .bind(video.user)
+            .bind(uuid)
+            .execute(&self.pool)
+            .await
+            .map(|_| ())
     }
 }
 

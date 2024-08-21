@@ -10,6 +10,7 @@ pub mod db;
 pub mod routes;
 pub mod state;
 pub mod utils;
+pub mod background_worker;
 
 #[launch]
 async fn rocket() -> _ {
@@ -38,6 +39,8 @@ async fn rocket() -> _ {
                     .limit("file", 10.gigabytes()),
             ));
     }
+    println!("[DEBUG ] Starting background worker...");
+    background_worker::init().unwrap();
 
     println!("[DEBUG ] Running before_launch...");
     before_launch().await;

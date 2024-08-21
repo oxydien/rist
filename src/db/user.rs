@@ -21,7 +21,7 @@ impl UserDB {
         if !Sqlite::database_exists(&sqlite_path).await.unwrap_or(false) {
             println!("[DEBUG ] Creating database {}", sqlite_path);
             match Sqlite::create_database(&sqlite_path).await {
-                Ok(_) => println!("[INFO  ] Create db success"),
+                Ok(_) => println!("[DEBUG ] Create db success"),
                 Err(error) => panic!("[ERROR ] Could not create new UserDB database: {}", error),
             }
         }

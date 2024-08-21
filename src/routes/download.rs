@@ -98,6 +98,13 @@ pub async fn download_file<'r>(
         }
     };
 
+    match state.file_db.increment_access_count(&u).await {
+        Ok(_) => {}
+        Err(_) => {
+            return DownloadResponse::default();
+        }
+    }
+
     DownloadResponse {
         found: true,
         finished: true,

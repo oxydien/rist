@@ -118,23 +118,10 @@ impl<'r, 'o: 'r> response::Responder<'r, 'o> for YoutubeError {
 
 impl<'r, 'o: 'r> response::Responder<'r, 'o> for YoutubeOutput {
     fn respond_to(self, req: &Request) -> rocket::response::Result<'o> {
-        let complete_path = match utils::get_file_with_extension(&self.path) {
-            Ok(val) => val.unwrap(),
-            Err(e) => {
-                eprintln!("Failed to get file with extension: {}", e);
-                return YoutubeError {
-                    kind: YoutubeErrorKind::ServerIssue,
-                    status: Status::InternalServerError,
-                    message: e.to_string(),
-                }
-                .respond_to(&req);
-            }
-        };
-
-        let content = match fs::read(&complete_path) {
+        let content = match fs::read(&self.path) {
             Ok(val) => val,
             Err(e) => {
-                eprintln!("Failed to read file at {:?}: {}", &complete_path, e);
+                eprintln!("Failed to read file at {:?}: {}", &self.path, e);
                 return YoutubeError {
                     kind: YoutubeErrorKind::ServerIssue,
                     status: Status::InternalServerError,
@@ -147,7 +134,7 @@ impl<'r, 'o: 'r> response::Responder<'r, 'o> for YoutubeOutput {
         let file_name = format!(
             "{}.{}",
             self.name,
-            utils::get_extension_from_path(&complete_path.to_str().unwrap()).unwrap()
+            utils::get_extension_from_path(&self.path).unwrap()
         );
         println!("[DEV   ] File name: {}", &file_name);
 
@@ -302,7 +289,7 @@ pub async fn youtube_download<'r>(
         }
     };
 
-    let video = match state.video_db.get_by_uuid(&uuid).await {
+    let mut video = match state.video_db.get_by_uuid(&uuid).await {
         Ok(video) => match video {
             Some(vid) => vid,
             None => {
@@ -388,8 +375,34 @@ pub async fn youtube_download<'r>(
         });
     }
 
+    let complete_path = match utils::get_file_with_extension(&path_str) {
+        Ok(val) => val.unwrap(),
+        Err(e) => {
+            eprintln!("Failed to get file with extension: {}", e);
+            return Err(YoutubeError {
+                kind: YoutubeErrorKind::ServerIssue,
+                status: Status::InternalServerError,
+                message: e.to_string(),
+            });
+        }
+    };
+
+    video.path = complete_path.clone().to_str().unwrap().to_string();
+
+    match state.video_db.update_data(&video.uuid, &video).await {
+        Ok(_) => {},
+        Err(e) => {
+            eprintln!("[ERROR] Database 'VideoDB' failed to update video: {}", e);
+            return Err(YoutubeError {
+                kind: YoutubeErrorKind::ServerIssue,
+                status: Status::InternalServerError,
+                message: e.to_string(),
+            });
+        }
+    }
+
     Ok(YoutubeOutput {
-        path: path_str,
+        path: video.path,
         uuid: uuid.to_string(),
         name: video.name,
         kind: format,

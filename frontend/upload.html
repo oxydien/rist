@@ -24,6 +24,17 @@
         enctype="multipart/form-data"
       >
         <input type="file" name="file" id="fileInput" />
+        <div class="option">
+          <label for="expire_check">
+            Enable expiration
+            <input type="checkbox" name="expire_check" id="expire_check" checked>
+          </label>
+          <input
+            type="datetime-local"
+            name="expire"
+            id="expire"
+          />
+        </div>
         <button class="btn btn-primary" type="submit" id="uploadBtn">
           Upload
         </button>
@@ -40,6 +51,8 @@
         const uploadForm = document.getElementById("uploadForm");
         const fileInput = document.getElementById("fileInput");
         const notice = document.getElementById("notice");
+        const expire_check = document.getElementById("expire_check");
+        const expire = document.getElementById("expire");
         let currentOutput = document.createElement("div");
 
         // Define upload states
@@ -165,12 +178,14 @@
           const fileSize = file.size;
           const fileName = file.name;
 
+          const expires_at = expire_check.checked ? new Date(expire.value).getTime() / 1000 : 0;
+
           // Prepare the JSON payload for the upload request
           const payload = {
             file_name: fileName,
             file_size: fileSize,
             file_hash: hashHex,
-            expires_at: 0,
+            expires_at,
           };
 
           changeState(states.REQUESTING);
