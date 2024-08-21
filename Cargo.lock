@@ -1657,7 +1657,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rist_FileLatch"
+name = "rist"
 version = "0.1.0"
 dependencies = [
  "hex",
