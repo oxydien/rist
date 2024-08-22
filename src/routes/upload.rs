@@ -272,13 +272,12 @@ pub async fn upload_file<'r>(
     };
 
     // Create the file
-    let save_path = &state.config.upload.upload_location;
-    if !Path::new(save_path).exists() {
+    let save_path = Path::new(&db_file.path);
+    if !Path::new(save_path.parent().unwrap()).exists() {
         std::fs::create_dir_all(save_path).unwrap();
     }
 
-    let file_path = format!("{}{}", save_path, uuid);
-    let mut file = fs::File::create(&file_path)
+    let mut file = fs::File::create(&db_file.path)
         .await
         .map_err(|_| UploadError {
             uuid: Some(uuid.clone()),
@@ -348,7 +347,6 @@ pub async fn upload_file<'r>(
     // Update the database
     db_file.hash = hash_str.clone();
     db_file.size = file_size as i64;
-    db_file.path = file_path.clone();
 
     state
         .file_db

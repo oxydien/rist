@@ -3,7 +3,7 @@ use sqlx::Row;
 use serde::Serialize;
 use sqlx::{migrate::MigrateDatabase, Sqlite, SqlitePool};
 
-use crate::utils;
+use crate::{state, utils};
 
 
 pub struct FileDB {
@@ -58,9 +58,13 @@ impl FileDB {
     }
 
     pub async fn add_from_request(&self, uuid: &str, file_name: String, file_size: u64, expires_at: u64) -> Result<(), sqlx::Error> {
+        let state = state::State::get().await.map_err(|_| sqlx::Error::WorkerCrashed)?;
+
+        let path = format!("{}{}", state.config.upload.upload_location, uuid);
+
         sqlx::query("INSERT INTO Files (uuid, path, hash, name, size, created, expires_at, access_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
             .bind(uuid)
-            .bind(self.path.clone())
+            .bind(path)
             .bind("-")
             .bind(file_name)
             .bind(file_size as i64)

@@ -21,9 +21,34 @@ This project is primarily intended for home-hosted or private file-sharing use c
 
 Ensure that you have the following prerequisites installed:
 - Rust 1.79 or later
-- `libsqlite3` C library
+- `sqlite3` C library
 - At least 2GB of storage (only for the server image)
 - Internet access (not required if using the server in a local environment and only the file upload feature)
+
+### Normal deployment
+
+Hosting RIST server from source is probably the easiest and most customizable option. To get started, follow these steps:
+
+1. Clone the GitHub repository:
+    ```sh
+    git clone https://github.com/oxydien/rist.git
+    ```
+
+2. Build the server (this may take a few minutes):
+    ```sh
+    cargo build --release
+
+    cp -r ./frontend ./target/release/
+    ```
+
+3. Run the server:
+    ```sh
+    cd ./target/release/
+
+    ./rist
+    ```
+
+And that is it! If you want to run this server in the background, you can try running it in tmux.
 
 ### Docker
 
@@ -53,31 +78,6 @@ If you want to stop running RIST, just type
 ```sh
 docker compose -p rist -f docker-compose.yaml down
 ```
-
-### Normal deployment
-
-Hosting RIST server from source is probably the easiest and most customizable option. To get started, follow these steps:
-
-1. Clone the GitHub repository:
-    ```sh
-    git clone https://github.com/oxydien/rist.git
-    ```
-
-2. Build the server (this may take a few minutes):
-    ```sh
-    cargo build --release
-
-    cp -r ./frontend ./target/release/
-    ```
-
-3. Run the server:
-    ```sh
-    cd ./target/release/
-
-    ./rist
-    ```
-
-And that is it! If you want to run this server in the background, you can try running it in tmux.
 
 ## Contributions
 
