@@ -90,10 +90,19 @@ impl UserDB {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum UserKind {
+    #[serde(rename = "admin")]
     Admin = 0,
+
+    #[serde(rename = "user")]
     User = 1,
+
+    #[serde(rename = "guest")]
     Guest = 2,
+
+    #[serde(rename = "yt_only")]
     YtOnly = 3,
+
+    #[serde(rename = "file_only")]
     FileOnly = 4,
 }
 

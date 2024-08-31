@@ -22,7 +22,7 @@ use crate::db::file::FileState;
 use crate::db::user::PermissionKind;
 use crate::state::State;
 
-use super::{BaseRateLimitGuard, RateLimitGuard, StrictRateLimitGuard, TokenAuth};
+use super::{BaseRateLimitGuard, RateLimitGuard, TokenAuth};
 
 // MARK: Models
 #[derive(Serialize, Clone)]
@@ -200,7 +200,7 @@ pub async fn request_upload<'r>(
 // MARK: Upload File
 #[post("/api/upload/<uuid_raw>", data = "<data>")]
 pub async fn upload_file<'r>(
-    _srt: RocketGovernor<'r, StrictRateLimitGuard>,
+    _srt: RocketGovernor<'r, RateLimitGuard>,
     auth: TokenAuth,
     uuid_raw: &str,
     data: Data<'_>,
