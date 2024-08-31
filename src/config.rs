@@ -128,7 +128,7 @@ impl Config {
                     }
                 }
                 "accounts" => {
-                    if let Some(accounts_value) = value.as_array() {
+                    if let Some(accounts_value) = value["user"].as_array() {
                         self.accounts.user.clear(); // Clear existing users
                         for account in accounts_value {
                             if let Some(account_obj) = account.as_object() {
