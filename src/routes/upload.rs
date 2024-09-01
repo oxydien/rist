@@ -10,6 +10,7 @@ use rocket::Data;
 use rocket::{post, response, Request, Response};
 use rocket_governor::RocketGovernor;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::io::Cursor;
 use std::{collections::HashMap, path::Path, sync::Arc};
@@ -74,11 +75,13 @@ pub struct UploadError {
     pub uuid: Option<String>,
     pub kind: UploadErrorKind,
     pub status: Status,
+    pub message: Option<String>,
 }
 
 #[rocket::async_trait]
 impl<'r, 'o: 'r> response::Responder<'r, 'o> for UploadError {
     fn respond_to(self, _: &Request) -> rocket::response::Result<'o> {
+        let m_uuid = self.uuid.clone();
         if let Some(uuid) = self.uuid {
             // Remove the uploaded file
             tokio::spawn(async move {
@@ -92,10 +95,13 @@ impl<'r, 'o: 'r> response::Responder<'r, 'o> for UploadError {
 
         let mut res = Response::new();
         res.set_status(self.status);
-        let body = format!(
-            r#"{{"status": {}, "error": "{:?}"}}"#,
-            self.status.code, self.kind
-        );
+        let body = json!({
+            "status": self.status.code,
+            "uuid": m_uuid,
+            "message": self.message
+        });
+        let body = serde_json::to_string(&body).unwrap();
+        println!("[DEBUG ] (Upload Error) {}", &body);
         res.set_sized_body(body.len(), Cursor::new(body));
         res.set_header(Header::new("Content-Type", "application/json"));
         Ok(res)
@@ -114,6 +120,7 @@ pub async fn request_upload<'r>(
             uuid: None,
             kind: UploadErrorKind::NoPermissions,
             status: Status::Forbidden,
+            message: None,
         });
     }
 
@@ -124,6 +131,7 @@ pub async fn request_upload<'r>(
                 uuid: None,
                 kind: UploadErrorKind::ServerIssue,
                 status: Status::InternalServerError,
+                message: None,
             })
         }
     };
@@ -133,6 +141,10 @@ pub async fn request_upload<'r>(
             uuid: None,
             kind: UploadErrorKind::FileTooLarge,
             status: Status::PayloadTooLarge,
+            message: Some(format!(
+                "File is too large. Max size is {}",
+                state.config.upload.max_size_bytes
+            ))
         });
     }
 
@@ -150,6 +162,7 @@ pub async fn request_upload<'r>(
                 uuid: None,
                 kind: UploadErrorKind::ServerIssue,
                 status: Status::InternalServerError,
+                message: Some("Failed to check if file exists".to_string()),
             }
         })
         .unwrap()
@@ -177,6 +190,7 @@ pub async fn request_upload<'r>(
                 uuid: None,
                 kind: UploadErrorKind::InvalidDataSupplied,
                 status: Status::InternalServerError,
+                message: Some("Failed to add file to DB".to_string()),
             }
         })
         .unwrap();
@@ -213,6 +227,7 @@ pub async fn upload_file<'r>(
             uuid: Some(uuid.clone()),
             kind: UploadErrorKind::NoPermissions,
             status: Status::Forbidden,
+            message: None,
         });
     }
 
@@ -224,6 +239,7 @@ pub async fn upload_file<'r>(
                 uuid: Some(uuid.clone()),
                 kind: UploadErrorKind::ServerIssue,
                 status: Status::InternalServerError,
+                message: None,
             })
         }
     };
@@ -236,6 +252,7 @@ pub async fn upload_file<'r>(
                 uuid: Some(uuid.clone()),
                 kind: UploadErrorKind::AlreadyInProgress,
                 status: Status::BadRequest,
+                message: None,
             });
         }
 
@@ -246,6 +263,7 @@ pub async fn upload_file<'r>(
             uuid: Some(uuid.clone()),
             kind: UploadErrorKind::InvalidUuid,
             status: Status::BadRequest,
+            message: None,
         });
     }
 
@@ -258,6 +276,7 @@ pub async fn upload_file<'r>(
             uuid: Some(uuid.clone()),
             kind: UploadErrorKind::ServerIssue,
             status: Status::InternalServerError,
+            message: Some("Failed to get file from DB".to_string()),
         })
         .unwrap()
     {
@@ -267,6 +286,7 @@ pub async fn upload_file<'r>(
                 uuid: Some(uuid.clone()),
                 kind: UploadErrorKind::InvalidUuid,
                 status: Status::BadRequest,
+                message: None,
             })
         }
     };
@@ -279,10 +299,11 @@ pub async fn upload_file<'r>(
 
     let mut file = fs::File::create(&db_file.path)
         .await
-        .map_err(|_| UploadError {
+        .map_err(|e| UploadError {
             uuid: Some(uuid.clone()),
             kind: UploadErrorKind::FileMissing,
             status: Status::InternalServerError,
+            message: Some(e.to_string()),
         })?;
 
     // Create the hasher
@@ -320,6 +341,7 @@ pub async fn upload_file<'r>(
                     uuid: Some(uuid.clone()),
                     kind: UploadErrorKind::UploadCanceled,
                     status: Status::BadRequest,
+                    message: None,
                 });
             }
         }
@@ -340,6 +362,7 @@ pub async fn upload_file<'r>(
                 uuid: Some(uuid.clone()),
                 kind: UploadErrorKind::ServerIssue,
                 status: Status::InternalServerError,
+                message: None,
             })
         }
     };
@@ -358,6 +381,7 @@ pub async fn upload_file<'r>(
                 uuid: Some(uuid.clone()),
                 kind: UploadErrorKind::ServerIssue,
                 status: Status::InternalServerError,
+                message: Some("Failed to update file in DB".to_string()),
             }
         })
         .unwrap();
