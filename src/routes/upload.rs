@@ -98,6 +98,7 @@ impl<'r, 'o: 'r> response::Responder<'r, 'o> for UploadError {
         let body = json!({
             "status": self.status.code,
             "uuid": m_uuid,
+            "kind": self.kind,
             "message": self.message
         });
         let body = serde_json::to_string(&body).unwrap();
@@ -293,8 +294,9 @@ pub async fn upload_file<'r>(
 
     // Create the file
     let save_path = Path::new(&db_file.path);
-    if !Path::new(save_path.parent().unwrap()).exists() {
-        std::fs::create_dir_all(save_path).unwrap();
+    let save_parent = save_path.parent().unwrap();
+    if !save_parent.exists() {
+        std::fs::create_dir_all(save_parent).unwrap();
     }
 
     let mut file = fs::File::create(&db_file.path)
