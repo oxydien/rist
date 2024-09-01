@@ -338,6 +338,12 @@
             parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i]
           );
         };
+
+        // Run once
+
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + 180);
+        expire.value = now.toISOString().slice(0, 16);
       </script>
     </main>
   </body>
