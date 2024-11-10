@@ -1,0 +1,35 @@
+.aside-item {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+
+  text-decoration: none;
+  font-size: var(--font-md);
+  font-weight: 600;
+  overflow: hidden;
+
+  color: hsl(var(--subtext-0-color));
+  background-color: hsl(var(--surface-0-color));  
+  padding: var(--gap-sm);
+  border-radius: var(--radius-md);
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.aside-item-icon {
+  display: grid;
+  place-items: center;
+  height: 42px;
+  width: 42px;
+  min-width: 42px;
+  padding: var(--gap-sm);
+}
+
+.aside-item-icon svg {
+  height: 100%;
+  width: 100%;
+  min-width: 100%;
+  min-height: 100%;
+  fill: hsl(var(--subtext-0-color));
+  transition: fill 0.2s ease-in-out;
+}

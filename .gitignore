@@ -4,3 +4,4 @@ config.json
 /db
 /frontend/node_modules
 /frontend/dist
+/garbage

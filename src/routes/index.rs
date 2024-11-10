@@ -72,3 +72,9 @@ pub async fn youtube_style<'r>(_brl: RocketGovernor<'r, BaseRateLimitGuard>, _au
 pub async fn medal_page<'r>(_brl: RocketGovernor<'r, BaseRateLimitGuard>, _auth: TokenAuth) -> Option<NamedFile> {
   NamedFile::open("frontend/medal.html").await.ok()
 }
+
+// TODO: Remove
+#[get("/dash/chunk_upload")]
+pub async fn chunk_upload_page<'r>(_brl: RocketGovernor<'r, BaseRateLimitGuard>, _auth: TokenAuth) -> Option<NamedFile> {
+  NamedFile::open("frontend/chunk_upload.html").await.ok()
+}
