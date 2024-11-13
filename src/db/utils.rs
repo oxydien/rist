@@ -32,12 +32,13 @@ pub(crate) async fn ensure_table_schema(
       if let Some(default_value) = column.default_value {
         create_table_query += &format!(" DEFAULT {}", default_value);
       }
-      create_table_query += ", ";
+      create_table_query += ",";
     }
     create_table_query.pop(); // Remove the last ", "
     create_table_query += ");";
 
     // Execute the CREATE TABLE statement
+    println!("[DEBUG ] Creating table '{}' {}", table_name, create_table_query.clone());
     sqlx::query(&create_table_query)
       .execute(&mut *transaction)
       .await?;

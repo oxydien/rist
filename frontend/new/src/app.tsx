@@ -3,28 +3,30 @@ import AuthorizePage from "./pages/public/AuthorizePage";
 import IndexPage from "./pages/public/IndexPage";
 
 export function App() {
-	const location = window.location;
-	const currentPath = location.pathname;
+  const location = window.location;
+  const currentPath = location.pathname.trim().toLowerCase();
 
-	if (currentPath === "/") {
-		return <IndexPage />;
-	}
-	if (currentPath.includes("authorize")) {
-		return <AuthorizePage />;
-	}
-	if (currentPath.startsWith("/dash")) {
-		const DashboardPage = lazy(() => import('./pages/private/DashboardPage'));
+  if (currentPath === "/") {
+    return <IndexPage />;
+  }
+  if (currentPath.includes("authorize")) {
+    return <AuthorizePage />;
+  }
+  if (currentPath.startsWith("/dash")) {
+    const DashboardPage = lazy(() => import("./pages/private/DashboardPage"));
+    const UploadPage = lazy(() => import("./pages/private/UploadPage"));
 
-		return (
-			<LocationProvider>
-				<ErrorBoundary>
-					<Router>
-						<Route path="/dash" component={DashboardPage} />
-						
-					</Router>
-				</ErrorBoundary>
-			</LocationProvider>
-		);
-	}
-	return <></>;
+    return (
+      <LocationProvider>
+        <ErrorBoundary>
+          <Router>
+            <Route path="/dash" component={DashboardPage} />
+            <Route path="/dash/upload" component={UploadPage} />
+            <Route default component={DashboardPage} />
+          </Router>
+        </ErrorBoundary>
+      </LocationProvider>
+    );
+  }
+  return <></>;
 }

@@ -1,0 +1,48 @@
+.aside-footer {
+  position: relative;
+  display: flex;
+  gap: var(--gap-sm);
+  flex-flow: row wrap-reverse;
+  width: 100%;
+  padding-top: var(--gap-sm);
+}
+
+.aside-footer::before {
+  content: "";
+  display: block;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  position: absolute;
+  width: 90%;
+  height: 4px;
+  background-color: hsl(var(--surface-1-color));
+  transition: background-color var(--_nav-transition);
+  border-radius: var(--radius-sm);
+}
+
+.aside-footer .aside-item {
+  flex-grow: 1;
+}
+
+.aside:not(.aside-open) .aside-footer .btn {
+  display: grid;
+  place-items: center;
+  width: 100%;
+}
+
+.aside-footer .btn {
+  padding: var(--gap-sm);
+  background-color: hsl(var(--surface-0-color) / 0.6);
+}
+
+.aside-footer .btn:hover, .aside-footer .btn:focus-visible {
+  background-color: hsl(var(--surface-1-color));
+}
+
+.aside-footer .btn svg {
+  height: 30px;
+  width: 30px;
+  margin: var(--gap-sm);
+  transform: rotate(-90deg);
+}

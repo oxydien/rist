@@ -2,9 +2,16 @@
   display: flex;
   align-items: center;
   gap: var(--gap-md);
+  overflow: hidden;
+}
+
+.aside-header-dash {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
   text-decoration: none;
   color: inherit;
-  overflow: hidden;
 }
 
 .aside-header-icon {
@@ -19,11 +26,21 @@
   padding: var(--gap-sm);
   font-size: var(--font-lg);
   font-weight: 600;
+  transition: margin-left var(--_nav-transition);
+}
+
+.aside:not(.aside-open) .aside-header-icon {
+  margin-left: var(--gap-sm);
 }
 
 .aside-header h2 {
   flex-grow: 1;
   white-space: nowrap;
+  transition: opacity var(--_nav-transition);
+}
+
+.aside:not(.aside-open) h2 {
+  opacity: 0;
 }
 
 .aside-header .btn {

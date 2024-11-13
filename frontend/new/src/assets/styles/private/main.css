@@ -18,3 +18,10 @@ body > div {
   padding: 0;
   margin: 0;
 }
+
+main {
+  margin: 120px auto;
+  max-width: 900px;
+  width: 100%;
+  padding-inline: var(--gap-md);
+}

@@ -1,0 +1,25 @@
+.module-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap-sm);
+  padding: var(--gap-md);
+  border-radius: var(--radius-md);
+  background-color: hsl(var(--surface-0-color));
+  transition: border-color 200ms;
+  text-align: center;
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 200ms;
+  cursor: pointer;
+}
+
+.module-card:hover, .module-card:focus-visible {
+  background-color: hsl(var(--surface-0-color) / 0.6);
+}
+
+.module-card svg {
+  width: 80px;
+  height: 80px;
+  margin-bottom: var(--gap-sm);
+}

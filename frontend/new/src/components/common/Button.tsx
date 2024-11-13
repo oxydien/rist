@@ -1,5 +1,5 @@
 import type React from "preact/compat";
-import "../../assets/styles/common/button.css"
+import "../../assets/styles/common/button.css";
 
 interface ButtonProps {
   children?: React.ReactNode;
@@ -10,27 +10,29 @@ interface ButtonProps {
   link?: string;
   target?: "_blank" | "_self" | "_parent" | "_top";
   className?: string;
+  tabIndex?: number;
 }
 
-const Button: React.FC<ButtonProps> = ({
-  children,
-  className = "",
-  variant = "default",
-  link,
-  ...props
-}) => {
+const Button: React.FC<ButtonProps> = ({ children, className = "", variant = "default", link, ...props }) => {
   const buttonClass = `btn btn-${variant}`;
 
   if (link) {
     return (
-      <a href={link} rel="noopener noreferrer" target={props.target} className={buttonClass} {...props}>
+      <a
+        href={link}
+        rel="noopener noreferrer"
+        tabindex={props.tabIndex}
+        target={props.target}
+        className={buttonClass}
+        {...props}
+      >
         {children}
       </a>
     );
   }
 
   return (
-    <button className={buttonClass} {...props}>
+    <button className={buttonClass} tabindex={props.tabIndex} {...props}>
       {children}
     </button>
   );

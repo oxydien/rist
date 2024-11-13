@@ -9,11 +9,31 @@
   overflow: hidden;
 
   color: hsl(var(--subtext-0-color));
-  background-color: hsl(var(--surface-0-color));  
+  background-color: hsl(var(--surface-0-color) / 0.6);
   padding: var(--gap-sm);
   border-radius: var(--radius-md);
-  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  transition: background-color 200ms, color 200ms, filter 200ms;
   cursor: pointer;
+}
+
+.aside-item.aside-item-active {
+  background-color: hsl(var(--surface-1-color));
+}
+
+.aside-item:hover,
+.aside-item:focus-visible {
+  background-color: hsl(var(--surface-1-color));
+  filter: brightness(0.8);
+}
+
+.aside-item p {
+  flex-grow: 1;
+  white-space: nowrap;
+  transition: color var(--_nav-transition);
+}
+
+.aside:not(.aside-open) .aside-item p {
+  color: transparent;
 }
 
 .aside-item-icon {
