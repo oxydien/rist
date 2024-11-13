@@ -8,6 +8,7 @@ extern crate rocket;
 pub mod background_worker;
 pub mod config;
 pub mod db;
+pub mod module;
 pub mod routes;
 pub mod state;
 pub mod utils;
@@ -75,6 +76,7 @@ async fn rocket() -> _ {
         routes::index::medal_page,
         routes::index::chunk_upload_page,
         routes::api::authorize,
+        routes::server_info::get_info_route,
         routes::upload::routes::upload_file_whole,
         routes::upload::routes::get_upload_status,
         routes::upload::routes::request_upload,

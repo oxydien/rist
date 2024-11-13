@@ -1,39 +1,55 @@
 import { useEffect, useState } from "preact/hooks";
 
-function DragChecker(): [boolean, (isDragging: boolean) => void] {
-  const [isDragging, setIsDragging] = useState(false);
+function DragChecker(elId?: string): [boolean, (isDragging: boolean) => void] {
+	const [isDragging, setIsDragging] = useState(false);
 
-  useEffect(() => {
-    const handleDragEnter = (_e: DragEvent) => {};
+	useEffect(() => {
+		const handleDragEnter = (_e: DragEvent) => {};
 
-    const handleDragOver = (e: DragEvent) => {
-      e.preventDefault();
-      setIsDragging(true);
-      console.log("dragging", e);
-    };
+		const handleDragOver = (e: DragEvent) => {
+			e.preventDefault();
 
-    const handleDragLeave = (_e: DragEvent) => {
-      setIsDragging(false);
-    };
+			// Nice things can't exist
+			const el = document.querySelector(elId || "");
+			const rect = el?.getBoundingClientRect();
+			if (rect) {
+				if (
+					e.clientX < rect.left ||
+					e.clientX > rect.right ||
+					e.clientY < rect.top ||
+					e.clientY > rect.bottom
+				) {
+					setIsDragging(false);
+					return;
+				}
+			}
 
-    const handleDragEnd = () => {
-      setIsDragging(false);
-    };
+			setIsDragging(true);
+			return;
+		};
 
-    window.addEventListener("dragenter", handleDragEnter);
-    window.addEventListener("dragover", handleDragOver);
-    window.addEventListener("dragleave", handleDragLeave);
-    window.addEventListener("dragend", handleDragEnd);
+		const handleDragLeave = (_e: DragEvent) => {
+			setIsDragging(false);
+		};
 
-    return () => {
-      window.removeEventListener("dragenter", handleDragEnter);
-      window.removeEventListener("dragover", handleDragOver);
-      window.removeEventListener("dragleave", handleDragLeave);
-      window.removeEventListener("dragend", handleDragEnd);
-    };
-  }, []);
+		const handleDragEnd = (_e: DragEvent) => {
+			setIsDragging(false);
+		};
 
-  return [isDragging, setIsDragging];
+		window.addEventListener("dragenter", handleDragEnter);
+		window.addEventListener("dragover", handleDragOver);
+		window.addEventListener("dragleave", handleDragLeave);
+		window.addEventListener("dragend", handleDragEnd);
+
+		return () => {
+			window.removeEventListener("dragenter", handleDragEnter);
+			window.removeEventListener("dragover", handleDragOver);
+			window.removeEventListener("dragleave", handleDragLeave);
+			window.removeEventListener("dragend", handleDragEnd);
+		};
+	}, [elId]);
+
+	return [isDragging, setIsDragging];
 }
 
 export default DragChecker;

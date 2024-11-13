@@ -14,7 +14,9 @@
   position: absolute;
   inset: 0;
   color: transparent;
+  cursor: pointer;
 }
+
 .big-file-input-label {
   position: absolute;
   inset: 0;

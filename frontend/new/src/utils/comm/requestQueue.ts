@@ -1,4 +1,4 @@
-import { type RateLimiter, RateLimiterFactory } from "./RateLimiter";
+import type { RateLimiter } from "./rateLimiter.ts";
 
 type EventCallback = (data?: unknown) => void;
 
@@ -74,3 +74,5 @@ class RequestQueue {
     }
   }
 }
+
+export default RequestQueue;

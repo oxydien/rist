@@ -11,7 +11,11 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use tokio::sync::RwLock;
 
-use crate::db::file::FileState;
+use crate::{
+  db::{file::FileState, user::PermissionKind},
+  module::{GetModule, Module},
+  utils,
+};
 
 pub mod error;
 pub(crate) mod file;
@@ -20,6 +24,44 @@ pub(crate) mod request;
 pub(crate) mod responders;
 pub(crate) mod routes;
 pub(crate) mod status;
+
+// MARK: Module
+pub struct UploadModule {}
+
+impl GetModule for UploadModule {
+  async fn get_module() -> Module {
+    let mut routes: HashMap<String, String> = HashMap::new();
+    routes.insert(
+      "UPLOAD_REQUEST".to_string(),
+      "/api/upload/request".to_string(),
+    );
+    routes.insert(
+      "UPLOAD_STATUS".to_string(),
+      "/api/upload_status/<uuid>".to_string(),
+    );
+    routes.insert(
+      "UPLOAD_ENTIRE".to_string(),
+      "/api/upload/<uuid>".to_string(),
+    );
+    routes.insert(
+      "UPLOAD_PART".to_string(),
+      "/api/upload/part/<uuid>/<part_number>".to_string(),
+    );
+
+    Module {
+      name: "Upload".to_string(),
+      api_routes: routes,
+      version: "0.1.0".to_string(),
+      summary: format!(
+        "Store and share your files, up to {} in size, on the server.",
+        utils::get_max_file_size(None).await
+      ),
+      icon_name: "upload".to_string(),
+      module_dash_url: "upload".to_string(),
+      permissions: PermissionKind::MedalDownload,
+    }
+  }
+}
 
 // MARK: Models
 #[derive(Serialize, Clone)]

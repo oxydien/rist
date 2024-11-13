@@ -1,12 +1,14 @@
 import ModuleCard from "../../components/common/ModuleCard";
 import Aside from "../../components/common/nav/Aside";
 import { useAppStore } from "../../stores/appStore";
+import { infoProcess } from "../../utils/comm/serverInfo";
 import PageWrapper from "./PageWrapper";
 
 export default function DashboardPage() {
   import("../../assets/styles/private/main.css");
   import("../../assets/styles/private/dashboard.css");
 
+  info();
   const modules = useAppStore().modules;
   return (
     <PageWrapper>
@@ -25,4 +27,8 @@ export default function DashboardPage() {
       </main>
     </PageWrapper>
   );
+}
+
+async function info() {
+  useAppStore().updateServerInfo(await infoProcess())
 }
