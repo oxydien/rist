@@ -1,4 +1,6 @@
 use rocket::data::ToByteUnit;
+use rocket::http::Method;
+use rocket_cors::{AllowedOrigins, CorsOptions};
 use rocket_governor::rocket_governor_catcher;
 use state::State;
 
@@ -48,6 +50,18 @@ async fn rocket() -> _ {
 
   // Launch rocket server
   println!("[DEBUG ] Launching server...");
+
+  // Cors (used for ui dev)
+  let cors = CorsOptions::default()
+    .allowed_origins(AllowedOrigins::all())
+    .allowed_methods(
+      vec![Method::Get, Method::Post]
+        .into_iter()
+        .map(From::from)
+        .collect(),
+    )
+    .allow_credentials(true);
+
   rocket::custom(figment)
     .register(
       "/",
@@ -87,6 +101,7 @@ async fn rocket() -> _ {
         routes::medal::download_medal_clip,
       ],
     )
+    .attach(cors.to_cors().unwrap())
 }
 
 async fn before_launch() {

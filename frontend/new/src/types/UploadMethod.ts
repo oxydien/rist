@@ -5,3 +5,16 @@ enum UploadMethod {
 }
 
 export default UploadMethod;
+
+export function uploadMethodToString(method: UploadMethod): string {
+  switch (method) {
+    case UploadMethod.UNKNOWN:
+      return "Unknown";
+    case UploadMethod.ENTIRE:
+      return "Entire";
+    case UploadMethod.CHUNKED:
+      return "Chunked";
+    default:
+      return "Unknown";
+  }
+}

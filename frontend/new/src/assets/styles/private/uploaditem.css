@@ -1,0 +1,118 @@
+.upload-item {
+  --_state-size: 60px;
+
+  display: grid;
+  grid-template-columns: var(--_state-size) 1fr 100px;
+  gap: var(--gap-md);
+  padding: var(--gap-md);
+  background: hsl(var(--base-color));
+  border-radius: var(--radius-md);
+  margin-top: var(--gap-sm);
+}
+
+.upload-state {
+  position: relative;
+  width: var(--_state-size);
+  height: var(--_state-size);
+  background-color: hsl(var(--surface-0-color));
+  border-radius: var(--radius-md);
+  isolation: isolate;
+}
+
+.upload-state .remote-progress,
+.upload-state .local-progress {
+  --_percentage: 0;
+  --_color: hsl(var(--surface-1-color));
+
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+  background: conic-gradient(
+    var(--_color) 0%,
+    var(--_color) var(--_percentage),
+    transparent var(--_percentage),
+    transparent 100%
+  );
+  z-index: 5;
+}
+
+.upload-state .local-progress {
+  --_color: hsl(var(--surface-1-color) / 0.6);
+  z-index: 3;
+}
+
+.upload-state .upload-icon-wrapper {
+  display: grid;
+  place-items: center;
+  position: absolute;
+  inset: 3px;
+  z-index: 10;
+  background-color: hsl(var(--surface-1-color));
+  border-radius: var(--radius-sm);
+}
+
+.upload-state .upload-icon-wrapper svg {
+  width: 48px;
+  height: 48px;
+}
+
+.upload-info {
+  display: flex;
+  gap: var(--gap-sm);
+  width: 100%;
+}
+
+.upload-info .state-info {
+  display: flex;
+  flex-flow: column nowrap;
+  width: 180px;
+  overflow: hidden;
+}
+
+.upload-info .state-info .file-state {
+  text-transform: lowercase;
+  color: hsl(var(--subtext-1-color));
+  font-weight: 500;
+}
+
+.upload-info .state-info .file-name {
+  font-weight: 600;
+  font-size: var(--font-lg);
+  text-overflow: ellipsis;
+}
+
+.local-info {
+  width: 100%;
+}
+
+.local-info .upload-info-main {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: var(--gap-sm);
+  width: 100%;
+  height: 100%;
+}
+
+.local-info .upload-info-headers {
+  display: flex;
+  flex-flow: row wrap;
+  gap: var(--gap-sm);
+  text-transform: lowercase;
+  font-weight: 500;
+  color: hsl(var(--subtext-1-color));
+  width: 100%;
+}
+
+.local-info .upload-info-headers>* {
+  flex-grow: 1;
+}
+
+.local-info .upload-uuid {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  color: hsl(var(--text-color));
+  font-weight: 600;
+  font-size: clamp(0.8rem, 2vw, 1.2rem);
+  white-space: nowrap;
+}

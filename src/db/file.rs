@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde_repr::Serialize_repr;
 use sqlx::{migrate::MigrateDatabase, Sqlite, SqlitePool};
 use sqlx::{prelude::FromRow, sqlite::SqliteRow, Row};
 use std::path::Path;
@@ -234,7 +234,8 @@ impl FromRow<'_, SqliteRow> for File {
   }
 }
 
-#[derive(Serialize, Clone, PartialEq)]
+#[derive(Serialize_repr, Clone, PartialEq)]
+#[repr(u8)]
 pub enum FileState {
   AwaitingData,
   Uploading,

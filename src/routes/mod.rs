@@ -43,7 +43,21 @@ impl<'r> FromRequest<'r> for TokenAuth {
         },
         Err(_) => return Outcome::Error((Status::InternalServerError, AuthError::ServerError)),
       },
-      None => Outcome::Error((Status::Unauthorized, AuthError::Missing)),
+      None => {
+        if let Some(auth_header) = request.headers().get_one("Authorization") {
+          if let Some(token) = auth_header.strip_prefix("Bearer ") {
+            match state.user_db.get(token).await {
+              Ok(maybe_user) => match maybe_user {
+                Some(user) => return Outcome::Success(TokenAuth(user)),
+                None => return Outcome::Error((Status::Unauthorized, AuthError::Invalid)),
+              },
+              Err(_) => return Outcome::Error((Status::InternalServerError, AuthError::ServerError)),
+            }
+          }
+        }
+
+        Outcome::Error((Status::Unauthorized, AuthError::Missing))
+      }
     }
   }
 }

@@ -27,6 +27,12 @@ class RequestQueue {
     this.processQueue();
   }
 
+  async awaitZeroRequests() {
+    while (this.activeRequests > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  }
+
   // Process requests from the queue up to the concurrency limit
   private async processQueue() {
     while (this.activeRequests < this.concurrencyLimit && this.queue.length > 0) {
@@ -45,8 +51,8 @@ class RequestQueue {
   private async processRequest(requestFn: () => Promise<unknown>, retriesRemaining: number) {
     this.emit("requestStarted");
     try {
-      await requestFn();
-      this.emit("requestFinished");
+      const result = await requestFn();
+      this.emit("requestFinished", result);
     } catch (error) {
       if (retriesRemaining > 0) {
         this.emit("requestRetry", { retriesRemaining });
@@ -58,7 +64,7 @@ class RequestQueue {
   }
 
   // Event system
-  on(event: string, callback: EventCallback) {
+  on(event: "requestStarted" | "requestFinished" | "requestRetry" | "requestFailed", callback: EventCallback) {
     if (!this.eventListeners[event]) {
       this.eventListeners[event] = [];
     }
