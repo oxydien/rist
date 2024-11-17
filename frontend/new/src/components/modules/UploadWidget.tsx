@@ -89,7 +89,7 @@ export function UploadWidget({ ...props }: UploadWidgetProps) {
     if (props.handleUpload) {
       props.handleUpload(fileInfo);
     }
-  }, [fileInfo, props.handleUpload]);
+  }, [fileInfo, props.handleUpload, expiration, customExpiration]);
 
   return (
     <div className="upload-widget">

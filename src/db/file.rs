@@ -3,6 +3,7 @@ use sqlx::{migrate::MigrateDatabase, Sqlite, SqlitePool};
 use sqlx::{prelude::FromRow, sqlite::SqliteRow, Row};
 use std::path::Path;
 
+use crate::file_type::FileType;
 use crate::{routes::upload::UploadMethod, state, utils};
 
 use super::utils::ensure_table_schema;
@@ -86,6 +87,11 @@ impl FileDB {
         data_type: "INTEGER NOT NULL",
         default_value: Some("5"), // 5 = complete
       },
+      TableColumn {
+        name: "file_type",
+        data_type: "VARCHAR",
+        default_value: None,
+      },
     ];
 
     ensure_table_schema(&pool, "Files", &table_columns).await?;
@@ -144,20 +150,34 @@ impl FileDB {
   }
 
   pub async fn update_data(&self, uuid: &str, file: File) -> Result<(), sqlx::Error> {
-    sqlx::query("UPDATE Files SET hash = ?, path = ?, name = ?, size = ?, created = ?, expires_at = ?, access_count = ?, file_state = ?, upload_method = ? WHERE uuid = ?")
-            .bind(file.hash)
-            .bind(file.path)
-            .bind(file.name)
-            .bind(file.size)
-            .bind(file.created)
-            .bind(file.expires_at)
-            .bind(file.access_count)
-            .bind(file.state.as_u8())
-            .bind(file.upload_method.as_u8())
-            .bind(uuid)
-            .execute(&self.pool)
-            .await
-            .map(|_| ())
+    sqlx::query(
+        "UPDATE Files SET \
+         hash = ?, \
+         path = ?, \
+         name = ?, \
+         size = ?, \
+         created = ?, \
+         expires_at = ?, \
+         access_count = ?, \
+         file_state = ?, \
+         upload_method = ?, \
+         file_type = ? \
+         WHERE uuid = ?"
+    )
+    .bind(file.hash)
+    .bind(file.path)
+    .bind(file.name)
+    .bind(file.size)
+    .bind(file.created)
+    .bind(file.expires_at)
+    .bind(file.access_count)
+    .bind(file.state.as_u8())
+    .bind(file.upload_method.as_u8())
+    .bind(file.file_type.map(|f| f.to_mime_type()).unwrap_or("".to_string()))
+    .bind(uuid)
+    .execute(&self.pool)
+    .await
+    .map(|_| ())
   }
 
   pub async fn increment_access_count(&self, uuid: &str) -> Result<(), sqlx::Error> {
@@ -214,6 +234,7 @@ pub struct File {
   /// Use [state::State::upload_status] instead (this can not update properly)
   pub state: FileState,
   pub upload_method: UploadMethod,
+  pub file_type: Option<FileType>,
 }
 
 impl FromRow<'_, SqliteRow> for File {
@@ -230,6 +251,7 @@ impl FromRow<'_, SqliteRow> for File {
       access_count: row.get(8),
       state: FileState::from_u8(row.get(9)),
       upload_method: UploadMethod::from_u8(row.get(9)),
+      file_type: FileType::from_mime_type(&row.try_get::<&str, usize>(10).unwrap_or("")),
     })
   }
 }

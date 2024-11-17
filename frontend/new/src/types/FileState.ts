@@ -9,6 +9,7 @@ enum FileState {
   // Local (only used for frontend)
   Queued = 205,
   ReadyToUpload = 206,
+  Hashing = 207,
 }
 export default FileState;
 
@@ -30,6 +31,8 @@ export function fileStateToString(state: FileState): string {
       return "Queued";
     case FileState.ReadyToUpload:
       return "Ready To Upload";
+    case FileState.Hashing:
+      return "Hashing";
     default:
       return "Unknown";
   }

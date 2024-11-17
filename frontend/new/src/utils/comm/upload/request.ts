@@ -1,6 +1,6 @@
 import { getToken } from "../../../stores/appStore";
 import type { FileUploadInfo } from "../../../types/FileUploadInfo";
-import UploadRequest from "../../../types/UploadRequest";
+import type UploadRequest from "../../../types/UploadRequest";
 import type UploadRequestResponse from "../../../types/UploadRequestResponse";
 import { getModuleRoute } from "../../staticRoutes";
 

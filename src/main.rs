@@ -10,10 +10,14 @@ extern crate rocket;
 pub mod background_worker;
 pub mod config;
 pub mod db;
+pub mod file_type;
 pub mod module;
 pub mod routes;
 pub mod state;
 pub mod utils;
+
+#[cfg(test)]
+mod tests;
 
 #[launch]
 async fn rocket() -> _ {

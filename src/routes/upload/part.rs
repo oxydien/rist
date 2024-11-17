@@ -11,7 +11,7 @@ use tokio::{
   io::{AsyncReadExt, AsyncWriteExt},
 };
 
-use crate::{db::file::FileState, state::State};
+use crate::{db::file::FileState, file_type::FileTypeDetector, state::State};
 
 use super::{
   error::{UploadError, UploadErrorKind},
@@ -193,7 +193,10 @@ pub async fn upload_part(
   let (current_parts, total_parts) = status.parts.unwrap_or((0, 0));
   status.parts = Some((current_parts + 1, total_parts));
 
-  println!("[DEV  ] Part uploaded: {}-{}, {}/{}", uuid_raw, part_number, current_parts, total_parts);
+  println!(
+    "[DEV  ] Part uploaded: {}-{}, {}/{}",
+    uuid_raw, part_number, current_parts, total_parts
+  );
 
   // Check if all parts are uploaded
   if status.parts.unwrap().0 == status.parts.unwrap().1 {
@@ -320,6 +323,9 @@ async fn finish_upload(uuid_raw: String) -> Result<(String, u64), UploadError> {
   let total_parts = status.parts.unwrap().1;
   drop(status_guard); // Release the lock
 
+  // Save the first part for file type detection
+  let mut first_part_buffer = vec![];
+
   println!("[DEV  ] Combining parts for: {}", uuid_raw);
   // Combine parts and calculate hash
   for i in 0..total_parts {
@@ -332,6 +338,10 @@ async fn finish_upload(uuid_raw: String) -> Result<(String, u64), UploadError> {
       status: Status::InternalServerError,
       message: Some(format!("Failed to read part file: {e}")),
     })?;
+
+    if i == 0 {
+      first_part_buffer = part_content.clone();
+    }
 
     // Update hash and write to final file
     hasher.update(&part_content);
@@ -385,11 +395,15 @@ async fn finish_upload(uuid_raw: String) -> Result<(String, u64), UploadError> {
   let complete_hash = hasher.finalize();
   let hash_str: String = hex::encode(complete_hash);
 
+  println!("[DEV  ] Detecting file type for: {}", uuid_raw);
+  let file_type = FileTypeDetector::guess(first_part_buffer.as_slice());
+
   db_file.state = FileState::Completed;
   db_file.hash = hash_str.clone();
   db_file.size = total_size as i64;
+  db_file.file_type = file_type.map(|f| Some(f)).unwrap_or(None);
 
-  println!("[DEV  ] Final hash: {} for {}", hash_str, uuid_raw);
+  println!("[DEV  ] Final state: hash={}, size={}, type={:?}; for: {}", hash_str, total_size, &db_file.file_type, uuid_raw);
   // Update database
   state
     .file_db

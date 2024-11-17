@@ -32,6 +32,8 @@
   user-select: none;
   pointer-events: none;
   font-size: var(--font-lg);
+  text-align: center;
+  margin-inline: var(--gap-md);
 }
 
 .big-file-input-label.hidden {

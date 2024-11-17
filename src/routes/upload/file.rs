@@ -7,7 +7,7 @@ use tokio::{
   io::{AsyncReadExt, AsyncWriteExt},
 };
 
-use crate::{db::file::FileState, state::State};
+use crate::{db::file::FileState, file_type::FileTypeDetector, state::State};
 
 use super::{
   error::{UploadError, UploadErrorKind},
@@ -84,13 +84,13 @@ pub async fn upload_entire_content(
   };
 
   // Create the file
-  let save_path = Path::new(&db_file.path);
-  let save_parent = save_path.parent().unwrap();
-  if !save_parent.exists() {
-    std::fs::create_dir_all(save_parent).unwrap();
+  let upload_location = Path::new(&state.config.upload.upload_location);
+  let file_path = upload_location.join(&uuid_raw);
+  if !upload_location.exists() {
+    std::fs::create_dir_all(upload_location).unwrap();
   }
 
-  let mut file = fs::File::create(&db_file.path)
+  let mut file = fs::File::create(file_path)
     .await
     .map_err(|e| UploadError {
       uuid: Some(uuid_raw.clone()),
@@ -107,12 +107,19 @@ pub async fn upload_entire_content(
   let mut stream = data.open(ByteUnit::from(state.config.upload.max_size_bytes.clone()));
   let mut buffer = [0u8; 8192]; // 8 KiB buffer
 
+  // Used to detect the file type
+  let mut first_chunk_buffer = vec![];
+
   drop(state);
   loop {
     match stream.read(&mut buffer).await {
       Ok(0) => break, // End Of File
       Ok(n) => {
         let chunk = &buffer[..n];
+
+        if first_chunk_buffer.len() < 16 {
+          first_chunk_buffer.extend_from_slice(chunk);
+        }
 
         if file.write_all(chunk).await.is_err() {
           break;
@@ -152,10 +159,14 @@ pub async fn upload_entire_content(
     Err(_) => return Err(UploadError::state_error()),
   };
 
+  let file_type = FileTypeDetector::guess(first_chunk_buffer.as_slice());
+
   // Update the database
   db_file.state = FileState::Completed;
+  db_file.path = file_path.to_string_lossy().to_string();
   db_file.hash = hash_str.clone();
   db_file.size = file_size as i64;
+  db_file.file_type = file_type.map(|f| Some(f)).unwrap_or(None);
 
   state
     .file_db
