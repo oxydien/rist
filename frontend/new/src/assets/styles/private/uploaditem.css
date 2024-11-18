@@ -2,7 +2,7 @@
 	--_state-size: 50px;
 
 	display: grid;
-	grid-template-columns: var(--_state-size) 1fr 120px;
+	grid-template-columns: var(--_state-size) 1fr 130px;
 	align-items: center;
 	gap: var(--gap-md);
 	padding: var(--gap-md);
@@ -87,7 +87,6 @@
 .upload-info .state-info .file-name {
 	font-weight: 600;
 	font-size: var(--_calc-font-size);
-	max-height: 1em;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -121,7 +120,6 @@
 
 .local-info .upload-uuid {
 	grid-column: span 3;
-	max-height: 1em;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;

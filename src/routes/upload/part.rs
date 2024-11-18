@@ -281,7 +281,7 @@ async fn finish_upload(uuid_raw: String) -> Result<(String, u64), UploadError> {
     }
   };
 
-  let file_path = upload_location.join(&db_file.path);
+  let file_path = upload_location.join(&uuid_raw);
 
   // Check for concurrent uploads (this should never happen)
   if file_path.exists() {
@@ -401,9 +401,13 @@ async fn finish_upload(uuid_raw: String) -> Result<(String, u64), UploadError> {
   db_file.state = FileState::Completed;
   db_file.hash = hash_str.clone();
   db_file.size = total_size as i64;
+  db_file.path = file_path.to_string_lossy().to_string();
   db_file.file_type = file_type.map(|f| Some(f)).unwrap_or(None);
 
-  println!("[DEV  ] Final state: hash={}, size={}, type={:?}; for: {}", hash_str, total_size, &db_file.file_type, uuid_raw);
+  println!(
+    "[DEV  ] Final state: hash={}, size={}, type={:?}; for: {}",
+    hash_str, total_size, &db_file.file_type, uuid_raw
+  );
   // Update database
   state
     .file_db

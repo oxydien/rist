@@ -67,11 +67,22 @@ nav button {
   width: 100%;
 }
 
+.verbose {
+  color: hsl(var(--lavender-color));
+  background-color: hsl(var(--lavender-color) / 0.1);
+  border-radius: var(--radius-md);
+  padding: var(--gap-sm) var(--gap-md);
+  margin-top: var(--gap-md);
+  text-align: center;
+  width: 100%;
+}
+
 @media screen and (max-width: 600px) {
   nav {
     flex-direction: column;
   }
-  nav button, nav input {
+  nav button,
+  nav input {
     width: 100%;
   }
 }

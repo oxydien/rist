@@ -176,9 +176,6 @@ impl FileTypeDetector {
           && (b.starts_with(b"\x00\x00\x00\x20ftyp")
             || b.starts_with(b"\x00\x00\x00\x18ftyp")))
           || (bytes_read >= 4 && b.starts_with(b"ftyp"))
-          || (bytes_read >= 4 && b.starts_with(b"moov"))
-          || (bytes_read >= 4 && b.starts_with(b"mdat"))
-          || (bytes_read >= 4 && b.starts_with(b"free"))
           || (bytes_read >= 4 && b.starts_with(b"skip"))
           || (bytes_read >= 4 && b.starts_with(b"wide"))) =>
       {

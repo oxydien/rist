@@ -242,8 +242,8 @@ impl FromRow<'_, SqliteRow> for File {
     Ok(Self {
       id: row.get(0),
       hash: row.get(1),
-      path: row.get(2),
-      uuid: row.get(3),
+      uuid: row.get(2),
+      path: row.get(3),
       name: row.get(4),
       size: row.get(5),
       created: row.get(6),

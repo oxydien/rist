@@ -12,17 +12,20 @@ export function authorize(token: string): Promise<void> {
     })
       .then((res) => {
         if (res.ok) {
+          console.debug("Authorize response OK");
           return res.json()
         }
         throw new Error(`Authorization failed with ${res.status} ${res.statusText}`);}
       )
       .then((data) => {
-        if (data.role) {
-          useAppStore().updateToken(token);
-          useAppStore().updateRole(data.role);
+        if ("role" in data) {
+          console.debug("Authorize data role", data.role);
+          useAppStore.getState().updateToken(token);
+          useAppStore.getState().updateRole(data.role);
           localStorage.setItem("token", token);
           resolve();
         } else {
+          console.debug("Authorize data error", data);
           reject(data.error);
         }
       })

@@ -97,12 +97,13 @@ export const UploadItem = ({ lus, onCancel }: UploadItemProps) => {
 		if (!lus.uuid) return;
 		const url = `${window.location.protocol}//${window.location.host}/f?u=${lus.uuid}`;
 		navigator.clipboard.writeText(url);
+    if (copied) return;
 		setCopied(true);
 
 		setTimeout(() => {
 			setCopied(false);
 		}, 1200);
-	}, [lus.uuid]);
+	}, [lus.uuid, copied]);
 
 	return (
 		<div className="upload-item">
@@ -169,7 +170,7 @@ export const UploadItem = ({ lus, onCancel }: UploadItemProps) => {
 			</div>
 			<div className="action-wrapper">
 				{[FileState.Finishing, FileState.Uploading].includes(state) && (
-					<Button variant="default" onClick={() => copyUrlToClipboard()}>
+					<Button variant="default" iconOnly onClick={() => copyUrlToClipboard()}>
 						{getIcon(copied ? "check" : "copy")({})}
 					</Button>
 				)}

@@ -1,6 +1,7 @@
 import { LocationProvider, ErrorBoundary, Router, Route, lazy } from "preact-iso";
 import AuthorizePage from "./pages/public/AuthorizePage";
 import IndexPage from "./pages/public/IndexPage";
+import DownloadPage from "./pages/public/DownloadPage";
 
 export function App() {
   const location = window.location;
@@ -12,6 +13,10 @@ export function App() {
   if (currentPath.includes("authorize")) {
     return <AuthorizePage />;
   }
+  if (currentPath === "/f") {
+    return <DownloadPage />;
+  }
+
   if (currentPath.startsWith("/dash")) {
     const DashboardPage = lazy(() => import("./pages/private/DashboardPage"));
     const UploadPage = lazy(() => import("./pages/private/UploadPage"));

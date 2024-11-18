@@ -21,6 +21,10 @@
   font-weight: 600;
 }
 
+.btn.icon-only {
+  padding: var(--gap-sm);
+}
+
 .btn:hover, .btn:focus-visible {
   background-color: var(--_hover-background-color);
   color: var(--_hover-text-color);

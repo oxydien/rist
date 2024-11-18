@@ -8,13 +8,14 @@ interface ButtonProps {
   disabled?: boolean;
   type?: "button" | "submit" | "reset";
   link?: string;
+  iconOnly?: boolean;
   target?: "_blank" | "_self" | "_parent" | "_top";
   className?: string;
   tabIndex?: number;
 }
 
 const Button: React.FC<ButtonProps> = ({ children, className = "", variant = "default", link, ...props }) => {
-  const buttonClass = `btn btn-${variant}`;
+  const buttonClass = `btn btn-${variant}${className ? ` ${className}` : ""}${props.iconOnly ? " icon-only" : ""}`;
 
   if (link) {
     return (

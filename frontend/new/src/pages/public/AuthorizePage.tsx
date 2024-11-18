@@ -13,11 +13,12 @@ export default function AuthorizePage() {
 		event?.preventDefault();
 		if (tokenVal) {
 			authorize(tokenVal)
-				.then(() => {
+				.then((res) => {
+					console.debug(res);
 					window.location.href = "/dash/";
 				})
 				.catch((error) => {
-					console.error(error);
+					console.error("Error while authorizing", error);
 					setError(error);
 				});
 		}

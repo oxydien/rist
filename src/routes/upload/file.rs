@@ -90,7 +90,7 @@ pub async fn upload_entire_content(
     std::fs::create_dir_all(upload_location).unwrap();
   }
 
-  let mut file = fs::File::create(file_path)
+  let mut file = fs::File::create(file_path.clone())
     .await
     .map_err(|e| UploadError {
       uuid: Some(uuid_raw.clone()),
