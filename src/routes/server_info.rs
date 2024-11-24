@@ -5,7 +5,8 @@ use serde::Serialize;
 use crate::module::{GetModule, Module};
 
 use super::{
-  medal::MedalModule, upload::UploadModule, youtube::YoutubeModule, RateLimitGuard, TokenAuth,
+  medal::MedalModule, upload::UploadModule, youtube::YoutubeModule, StandardRateLimitGuard,
+  TokenAuth,
 };
 
 #[derive(Serialize)]
@@ -20,7 +21,7 @@ pub struct ServerInfo {
 
 #[rocket::get("/api/info")]
 pub async fn get_info_route<'r>(
-  _rt: RocketGovernor<'r, RateLimitGuard>,
+  _rt: RocketGovernor<'r, StandardRateLimitGuard>,
   auth: TokenAuth,
 ) -> Result<Json<ServerInfo>, Status> {
   get_info(auth).await

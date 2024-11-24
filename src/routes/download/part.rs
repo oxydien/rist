@@ -36,15 +36,7 @@ pub async  fn download_part(uuid: &str, part: u32) -> Result<DownloadResponse, D
         }
       )
     },
-    None => {
-      return Err(
-        DownloadError {
-          status: Status::NotFound,
-          kind: DownloadErrorKind::NotFound,
-          message: String::from("File not found"),
-        }
-      )
-    }
+    None => {}
   }
 
   let offset = (CHUNK_SIZE * (part as u64)) as u64;

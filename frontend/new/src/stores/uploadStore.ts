@@ -3,31 +3,10 @@ import type UploadStore from "../types/UploadStore";
 import FileState from "../types/FileState";
 import type LocalUploadState from "../types/LocalUploadState";
 import type UploadStatus from "../types/UploadStatus";
-import UploadMethod from "../types/UploadMethod";
+import type { FileUploadInfo } from "../types/FileUploadInfo";
 
 export const useUploadStore = create<UploadStore>((set) => ({
-	uploads: [
-		//		{
-		//			uuid: "922a19ec-02c2-4f0f-a517-66204c8b4569",
-		//			state: FileState.Queued,
-		//			file: {
-		//				blob: null,
-		//				name: "File name that is too long to display.txt",
-		//				size: 164562 * 4,
-		//				type: "application/octet-stream",
-		//				uploadMethod: UploadMethod.CHUNKED,
-		//				expiration: 0,
-		//			},
-		//			status: {
-		//				upload_method: UploadMethod.CHUNKED,
-		//				state: FileState.Uploading,
-		//				total_bytes: 164562 * 4,
-		//				uploaded_bytes: 124562,
-		//				parts: [13, 53],
-		//			},
-		//			localProgress: 164562,
-		//		},
-	],
+	uploads: [],
 
 	getByUuid(uuid) {
 		return this.uploads.find((f) => f.uuid === uuid);
@@ -77,6 +56,13 @@ export const useUploadStore = create<UploadStore>((set) => ({
 		set((state) => ({
 			uploads: state.uploads.map((f) =>
 				f.uuid === uuid ? { ...f, localProgress: progress } : f,
+			),
+		}));
+	},
+	setError(file, error) {
+		set((state) => ({
+			uploads: state.uploads.map((f) =>
+				f.file.blob === file.blob ? { ...f, error } : f,
 			),
 		}));
 	},
@@ -133,6 +119,14 @@ export function updateUploadLocalProgress(uuid: string, progress: number) {
 	useUploadStore.setState((state) => ({
 		uploads: state.uploads.map((f) =>
 			f.uuid === uuid ? { ...f, localProgress: progress } : f,
+		),
+	}));
+}
+
+export function setError(file: FileUploadInfo, error: string) {
+	useUploadStore.setState((state) => ({
+		uploads: state.uploads.map((f) =>
+			f.file.blob === file.blob ? { ...f, error } : f,
 		),
 	}));
 }

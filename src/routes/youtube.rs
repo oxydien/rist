@@ -2,7 +2,7 @@ use core::str;
 use std::{collections::HashMap, fs, io::Cursor, path::Path};
 
 use rocket::{
-  http::{ContentType, Header, Status},
+  http::{ContentType, Status},
   response,
   serde::json::Json,
   Request, Response,
@@ -18,10 +18,13 @@ use crate::{
     user::PermissionKind,
     video::{Video, YoutubeKind, YoutubeQuality},
   },
+  file_type::{AudioType, FileType, VideoType},
   module::{GetModule, Module},
-  routes::{RateLimitGuard, TokenAuth},
+  routes::{StandardRateLimitGuard, TokenAuth},
   state, utils,
 };
+
+use super::upload::UploadMethod;
 
 // MARK: Module
 pub struct YoutubeModule;
@@ -102,7 +105,6 @@ pub struct YoutubeError {
 pub struct YoutubeOutput {
   pub uuid: String,
   pub name: String,
-  pub path: String,
   pub kind: YoutubeKind,
 }
 
@@ -146,34 +148,16 @@ impl<'r, 'o: 'r> response::Responder<'r, 'o> for YoutubeError {
 }
 
 impl<'r, 'o: 'r> response::Responder<'r, 'o> for YoutubeOutput {
-  fn respond_to(self, req: &Request) -> rocket::response::Result<'o> {
-    let content = match fs::read(&self.path) {
-      Ok(val) => val,
-      Err(e) => {
-        eprintln!("Failed to read file at {:?}: {}", &self.path, e);
-        return YoutubeError {
-          kind: YoutubeErrorKind::ServerIssue,
-          status: Status::InternalServerError,
-          message: e.to_string(),
-        }
-        .respond_to(&req);
-      }
-    };
+  fn respond_to(self, _: &Request) -> rocket::response::Result<'o> {
+    let mut res = Response::new();
 
-    let file_name = format!(
-      "{}.{}",
-      self.name,
-      utils::get_extension_from_path(&self.path).unwrap()
-    );
-    println!("[DEV   ] File name: {}", &file_name);
-
-    let res = Response::build()
-      .header(Header::new(
-        "Content-Disposition",
-        format!("attachment; filename=\"{}\"", &file_name),
-      ))
-      .sized_body(content.len(), Cursor::new(content))
-      .finalize();
+    let body = json!({
+        "uuid": self.uuid,
+        "name": self.name
+    })
+    .to_string();
+    res.set_sized_body(body.len(), Cursor::new(body));
+    res.set_header(ContentType::new("application", "json"));
     Ok(res)
   }
 }
@@ -181,7 +165,7 @@ impl<'r, 'o: 'r> response::Responder<'r, 'o> for YoutubeOutput {
 // MARK: Youtube request
 #[post("/api/youtube/request?<url>", format = "json", data = "<data>")]
 pub async fn youtube_request<'r>(
-  _rt: RocketGovernor<'r, RateLimitGuard>,
+  _rt: RocketGovernor<'r, StandardRateLimitGuard>,
   auth: TokenAuth,
   url: String,
   data: Json<YoutubeRequest>,
@@ -295,7 +279,7 @@ pub async fn youtube_request<'r>(
 // MARK: Youtube download
 #[get("/api/youtube/download/<uuid>")]
 pub async fn youtube_download<'r>(
-  _rt: RocketGovernor<'r, RateLimitGuard>,
+  _rt: RocketGovernor<'r, StandardRateLimitGuard>,
   auth: TokenAuth,
   uuid: &str,
 ) -> Result<YoutubeOutput, YoutubeError> {
@@ -349,10 +333,10 @@ pub async fn youtube_download<'r>(
 
   let url = format!("https://www.youtube.com/watch?v={}", video.vid_id);
 
-  let path_str = format!(
-    "{}{}-{}",
-    &state.config.upload.upload_location, &video.uuid, &video.vid_id
-  );
+  let path_str = Path::new(&state.config.upload.upload_location)
+    .join(format!("{}-{}", &video.uuid, &video.vid_id))
+    .to_string_lossy()
+    .into_owned();
   let path = Path::new(path_str.as_str());
   let quality = YoutubeQuality::from_u8(video.quality);
   let format = YoutubeKind::from_u8(video.format);
@@ -431,8 +415,63 @@ pub async fn youtube_download<'r>(
     }
   }
 
+  // Get fs file info
+  let metadata = match fs::metadata(&complete_path) {
+    Ok(val) => val,
+    Err(e) => {
+      eprintln!("[ERROR] Failed to get file metadata (yt): {}", e);
+      return Err(YoutubeError {
+        kind: YoutubeErrorKind::ServerIssue,
+        status: Status::InternalServerError,
+        message: e.to_string(),
+      });
+    }
+  };
+
+  match state
+    .file_db
+    .add_and_get_from_request(
+      &video.uuid,
+      video.name.clone(),
+      metadata.len(),
+      utils::get_current_timestamp() + 65_321,
+      UploadMethod::Url,
+      true,
+    )
+    .await
+  {
+    Ok(db_file) => {
+      let mut db_file = db_file.unwrap();
+      db_file.path = complete_path.to_string_lossy().to_string();
+      db_file.file_type = Some(match format {
+        YoutubeKind::Video => FileType::Video(VideoType::MP4),
+        YoutubeKind::AudioWav => FileType::Audio(AudioType::WAV),
+        YoutubeKind::AudioMp3 => FileType::Audio(AudioType::MP3),
+      });
+
+      match state.file_db.update_data(&video.uuid, db_file).await {
+        Ok(_) => {}
+        Err(e) => {
+          eprintln!("[ERROR] Database 'FileDB' failed to update file: {}", e);
+          return Err(YoutubeError {
+            kind: YoutubeErrorKind::ServerIssue,
+            status: Status::InternalServerError,
+            message: e.to_string(),
+          });
+        }
+      }
+    }
+    Err(err) => {
+      eprintln!("[ERROR] Database 'FileDB' failed to add file: {}", err);
+      return Err(YoutubeError {
+        kind: YoutubeErrorKind::ServerIssue,
+        status: Status::InternalServerError,
+        message: err.to_string(),
+      });
+    }
+  }
+
   Ok(YoutubeOutput {
-    path: video.path,
     uuid: uuid.to_string(),
     name: video.name,
     kind: format,

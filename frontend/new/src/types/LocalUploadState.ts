@@ -7,5 +7,6 @@ export default interface LocalUploadState {
   state: FileState;
   file: FileUploadInfo;
   status: UploadStatus | null;
+  error?: string;
   localProgress: number;
 }

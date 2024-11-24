@@ -51,7 +51,9 @@ impl<'r> FromRequest<'r> for TokenAuth {
                 Some(user) => return Outcome::Success(TokenAuth(user)),
                 None => return Outcome::Error((Status::Unauthorized, AuthError::Invalid)),
               },
-              Err(_) => return Outcome::Error((Status::InternalServerError, AuthError::ServerError)),
+              Err(_) => {
+                return Outcome::Error((Status::InternalServerError, AuthError::ServerError))
+              }
             }
           }
         }
@@ -62,19 +64,19 @@ impl<'r> FromRequest<'r> for TokenAuth {
   }
 }
 
-pub struct BaseRateLimitGuard;
-pub struct RateLimitGuard;
+pub struct RelaxedRateLimitGuard;
+pub struct StandardRateLimitGuard;
 pub struct StrictRateLimitGuard;
 
-impl<'r> RocketGovernable<'r> for BaseRateLimitGuard {
+impl<'r> RocketGovernable<'r> for RelaxedRateLimitGuard {
   fn quota(_method: rocket_governor::Method, _route_name: &str) -> Quota {
-    Quota::per_minute(Self::nonzero(70))
+    Quota::per_minute(Self::nonzero(90))
   }
 }
 
-impl<'r> RocketGovernable<'r> for RateLimitGuard {
+impl<'r> RocketGovernable<'r> for StandardRateLimitGuard {
   fn quota(_method: rocket_governor::Method, _route_name: &str) -> Quota {
-    Quota::per_minute(Self::nonzero(10))
+    Quota::per_minute(Self::nonzero(15))
   }
 }
 

@@ -171,13 +171,10 @@ impl FileTypeDetector {
       }
 
       // Video Formats
-      b if bytes_read >= 4
-        && ((bytes_read >= 8
-          && (b.starts_with(b"\x00\x00\x00\x20ftyp")
-            || b.starts_with(b"\x00\x00\x00\x18ftyp")))
+      b if (bytes_read >= 8 && &b[4..8] == b"ftyp")
           || (bytes_read >= 4 && b.starts_with(b"ftyp"))
           || (bytes_read >= 4 && b.starts_with(b"skip"))
-          || (bytes_read >= 4 && b.starts_with(b"wide"))) =>
+          || (bytes_read >= 4 && b.starts_with(b"wide")) =>
       {
         FileType::Video(VideoType::MP4)
       }

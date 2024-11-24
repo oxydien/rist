@@ -64,3 +64,14 @@ pub async fn get_max_file_size(state: Option<&State>) -> u64 {
   };
   return state.config.upload.max_size_bytes as u64;
 }
+
+pub fn format_bytes(bytes: u64) -> String {
+  let units = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+  let mut num = bytes as f64;
+  let mut unit = 0;
+  while num >= 1024.0 {
+    num /= 1024.0;
+    unit += 1;
+  }
+  format!("{:.2} {}", num, units[unit])
+}

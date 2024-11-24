@@ -88,6 +88,8 @@ impl<'r, 'o: 'r> response::Responder<'r, 'o> for DownloadResponse {
 #[rocket::async_trait]
 impl<'r, 'o: 'r> response::Responder<'r, 'o> for DownloadError {
   fn respond_to(self, req: &Request) -> rocket::response::Result<'o> {
-    Ok(Json(self).respond_to(req).unwrap())
+    let mut res = Json(&self).respond_to(req).unwrap();
+    res.set_status(self.status);
+    Ok(res)
   }
 }

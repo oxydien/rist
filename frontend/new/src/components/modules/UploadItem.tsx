@@ -97,7 +97,7 @@ export const UploadItem = ({ lus, onCancel }: UploadItemProps) => {
 		if (!lus.uuid) return;
 		const url = `${window.location.protocol}//${window.location.host}/f?u=${lus.uuid}`;
 		navigator.clipboard.writeText(url);
-    if (copied) return;
+		if (copied) return;
 		setCopied(true);
 
 		setTimeout(() => {
@@ -140,12 +140,15 @@ export const UploadItem = ({ lus, onCancel }: UploadItemProps) => {
 						<div className="upload-method-header">
 							Method: {showUUID && uploadMethodToString(lus.file.uploadMethod)}
 						</div>
-						<div className="upload-expiration-header">
+						<div
+							className="upload-expiration-header"
+							title={new Date(lus.file.expiration * 1000).toLocaleString()}
+						>
 							Expiration:{" "}
 							{showUUID &&
 								(lus.file.expiration === 0
 									? "never"
-									: formatDate(lus.file.expiration))}
+									: formatDate(lus.file.expiration * 1000))}
 						</div>
 						<div className="upload-size-header">
 							Size: {showUUID && formatBytes(lus.file.size)}
@@ -159,8 +162,11 @@ export const UploadItem = ({ lus, onCancel }: UploadItemProps) => {
 								<div className="upload-method">
 									{uploadMethodToString(lus.file.uploadMethod)}
 								</div>
-								<div className="upload-expiration">
-									{formatDate(lus.file.expiration)}
+								<div
+									className="upload-expiration"
+									title={new Date(lus.file.expiration * 1000).toLocaleString()}
+								>
+									{formatDate(lus.file.expiration * 1000)}
 								</div>
 								<div className="upload-size">{formatBytes(lus.file.size)}</div>
 							</>
@@ -170,7 +176,11 @@ export const UploadItem = ({ lus, onCancel }: UploadItemProps) => {
 			</div>
 			<div className="action-wrapper">
 				{[FileState.Finishing, FileState.Uploading].includes(state) && (
-					<Button variant="default" iconOnly onClick={() => copyUrlToClipboard()}>
+					<Button
+						variant="default"
+						iconOnly
+						onClick={() => copyUrlToClipboard()}
+					>
 						{getIcon(copied ? "check" : "copy")({})}
 					</Button>
 				)}
@@ -189,6 +199,11 @@ export const UploadItem = ({ lus, onCancel }: UploadItemProps) => {
 					</Button>
 				)}
 			</div>
+			{lus.error && (
+				<div className="error-wrapper">
+					{getIcon("error")({})} {lus.error}
+				</div>
+			)}
 		</div>
 	);
 };

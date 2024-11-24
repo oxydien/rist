@@ -74,18 +74,20 @@ export function UploadWidget({ ...props }: UploadWidgetProps) {
         fileInfo.expiration = 0;
         break;
       case UploadExpiration.ONE_HOUR:
-        fileInfo.expiration = Date.now() + 1000 * 60 * 60;
+        fileInfo.expiration = (Date.now() + 1000 * 60 * 60);
         break;
       case UploadExpiration.ONE_DAY:
-        fileInfo.expiration = Date.now() + 1000 * 60 * 60 * 24;
+        fileInfo.expiration = (Date.now() + 1000 * 60 * 60 * 24);
         break;
       case UploadExpiration.ONE_WEEK:
-        fileInfo.expiration = Date.now() + 1000 * 60 * 60 * 24 * 7;
+        fileInfo.expiration = (Date.now() + 1000 * 60 * 60 * 24 * 7);
         break;
       case UploadExpiration.CUSTOM:
         fileInfo.expiration = customExpiration;
         break;
     }
+    fileInfo.expiration = Math.round(fileInfo.expiration / 1000);
+
     if (props.handleUpload) {
       props.handleUpload(fileInfo);
     }

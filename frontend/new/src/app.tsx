@@ -20,6 +20,8 @@ export function App() {
   if (currentPath.startsWith("/dash")) {
     const DashboardPage = lazy(() => import("./pages/private/DashboardPage"));
     const UploadPage = lazy(() => import("./pages/private/UploadPage"));
+    const YoutubePage = lazy(() => import("./pages/private/YoutubePage"));
+    const MedalPage = lazy(() => import("./pages/private/MedalPage"));
 
     return (
       <LocationProvider>
@@ -27,6 +29,8 @@ export function App() {
           <Router>
             <Route path="/dash" component={DashboardPage} />
             <Route path="/dash/upload" component={UploadPage} />
+            <Route path="/dash/yt" component={YoutubePage} />
+            <Route path="/dash/medal" component={MedalPage} />
             <Route default component={DashboardPage} />
           </Router>
         </ErrorBoundary>

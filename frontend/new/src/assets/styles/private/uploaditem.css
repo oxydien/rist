@@ -9,6 +9,35 @@
 	background: hsl(var(--base-color));
 	border-radius: var(--radius-md);
 	margin-top: var(--gap-sm);
+
+	@container (width < 800px) {
+		--_state-size: 80px;
+		display: flex;
+		flex-flow: column;
+
+		.upload-info {
+			display: flex;
+			flex-flow: column nowrap;
+			align-items: center;
+		}
+
+		.upload-info .state-info,
+		.upload-info .local-info {
+			text-align: center;
+		}
+
+		.upload-info .upload-info-headers {
+			display: flex;
+			flex-flow: row wrap;
+			gap: var(--gap-md);
+			justify-content: center;
+			margin-bottom: var(--gap-md);
+		}
+
+		.action-wrapper > * {
+			width: 100%;
+		}
+	}
 }
 
 .upload-state {
@@ -57,8 +86,8 @@
 }
 
 .upload-state .upload-icon-wrapper svg {
-	width: 24px;
-	height: 24px;
+	width: calc(var(--_state-size) * 0.5);
+	height: calc(var(--_state-size) * 0.5);
 	color: hsl(var(--text-color));
 }
 
@@ -75,6 +104,7 @@
 	flex-flow: column nowrap;
 	justify-content: center;
 	width: 40%;
+	max-width: 200px;
 	overflow: hidden;
 }
 
@@ -97,6 +127,7 @@
 	flex-flow: column;
 	justify-content: center;
 	width: 100%;
+	max-width: 400px;
 }
 
 .local-info .upload-info-headers {
@@ -135,4 +166,19 @@
 
 .upload-item .action-wrapper .btn {
 	font-size: var(--font-sm);
+}
+
+.upload-item .error-wrapper {
+	display: flex;
+	flex-flow: row wrap;
+	align-items: center;
+	grid-column: span 3;
+	width: 100%;
+	gap: var(--gap-md);
+	height: fit-content;
+	color: hsl(var(--maroon-color));
+	border-top: 2px solid hsl(var(--surface-1-color));
+	padding-top: var(--gap-md);
+	font-size: var(--font-sm);
+	font-weight: 500;
 }

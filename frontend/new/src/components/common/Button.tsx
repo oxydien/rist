@@ -5,6 +5,7 @@ interface ButtonProps {
   children?: React.ReactNode;
   variant?: "default" | "primary" | "destructive";
   onClick?: (event?: MouseEvent) => void;
+  onKeyUp?: (event?: KeyboardEvent) => void;
   disabled?: boolean;
   type?: "button" | "submit" | "reset";
   link?: string;
@@ -12,6 +13,7 @@ interface ButtonProps {
   target?: "_blank" | "_self" | "_parent" | "_top";
   className?: string;
   tabIndex?: number;
+  download?: string;
 }
 
 const Button: React.FC<ButtonProps> = ({ children, className = "", variant = "default", link, ...props }) => {
@@ -25,6 +27,7 @@ const Button: React.FC<ButtonProps> = ({ children, className = "", variant = "de
         tabindex={props.tabIndex}
         target={props.target}
         className={buttonClass}
+        download={props.download}
         {...props}
       >
         {children}

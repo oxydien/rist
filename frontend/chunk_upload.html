@@ -103,7 +103,7 @@
         this.completed = new Set();
         this.failed = new Map();
         this.maxRetries = 3;
-        this.rateLimiter = new RateLimiter(RATE_LIMIT_PER_MINUTE);
+        this.standardRateLimiter = new RateLimiter(RATE_LIMIT_PER_MINUTE);
         this.lastStatusUpdate = Date.now();
       }
 
@@ -143,7 +143,7 @@
 
         try {
           // Wait for rate limiter token
-          await this.rateLimiter.waitForToken();
+          await this.standardRateLimiter.waitForToken();
 
           const start = chunkIndex * CHUNK_SIZE;
           const end = Math.min(start + CHUNK_SIZE, this.file.size);

@@ -1,4 +1,4 @@
-export const BASE_URL = "http://127.0.0.1:3003";
+export const BASE_URL = "http://10.0.0.50:3003";
 
 export const routes = {
   AUTHORIZATION: "/api/authorize",

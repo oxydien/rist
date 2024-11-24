@@ -24,6 +24,7 @@ pub(crate) mod request;
 pub(crate) mod responders;
 pub(crate) mod routes;
 pub(crate) mod status;
+pub(crate) mod url;
 
 // MARK: Module
 pub struct UploadModule {}
@@ -54,7 +55,7 @@ impl GetModule for UploadModule {
       version: "0.1.0".to_string(),
       summary: format!(
         "Store and share your files, up to {} in size, on the server.",
-        utils::get_max_file_size(None).await
+        utils::format_bytes(utils::get_max_file_size(None).await)
       ),
       icon_name: "upload".to_string(),
       module_dash_url: "upload".to_string(),
@@ -85,6 +86,7 @@ pub enum UploadMethod {
   EntireContent = 1,
   /// Used when the uploaded content has to be sent in chunks (cloudflare)
   Chunked = 2,
+  Url = 3,
 }
 
 impl UploadMethod {
@@ -93,6 +95,7 @@ impl UploadMethod {
       0 => UploadMethod::Unknown,
       1 => UploadMethod::EntireContent,
       2 => UploadMethod::Chunked,
+      3 => UploadMethod::Url,
       _ => UploadMethod::Unknown,
     }
   }
@@ -101,6 +104,7 @@ impl UploadMethod {
       UploadMethod::Unknown => 0,
       UploadMethod::EntireContent => 1,
       UploadMethod::Chunked => 2,
+      UploadMethod::Url => 3,
     }
   }
 }
@@ -126,7 +130,7 @@ pub type UploadStatusMap = Arc<RwLock<HashMap<String, UploadStatus>>>;
 
 #[derive(Serialize)]
 pub struct UploadResponse {
-  uuid: String,
+  pub uuid: String,
   hash: String,
   size: i64,
 }

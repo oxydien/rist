@@ -1,0 +1,157 @@
+.yt-form {
+	display: flex;
+	flex-flow: column nowrap;
+	gap: var(--gap-sm);
+	margin-top: var(--gap-sm);
+	background-color: hsl(var(--base-color));
+	border-radius: var(--radius-md);
+	padding: var(--gap-md);
+	box-shadow: var(--shadow-lg);
+}
+
+.yt-form .url-input-wrapper input {
+	width: 100%;
+}
+
+.yt-form .request-options {
+	display: flex;
+	flex-flow: row wrap;
+	gap: var(--gap-sm);
+}
+
+.yt-form .request-options .request-option-wrapper {
+	flex-grow: 1;
+
+	display: flex;
+	flex-flow: column;
+	gap: var(--gap-sm);
+}
+
+.yt-form .action-wrapper {
+  display: flex;
+  gap: var(--gap-sm);
+  border-top: 2px solid hsl(var(--surface-1-color));
+  margin-top: var(--gap-sm);
+  padding-top: var(--gap-md);
+}
+
+.yt-form .action-wrapper button {
+  flex-grow: 1;
+}
+
+.queue {
+	display: flex;
+	flex-flow: column-reverse;
+	gap: var(--gap-sm);
+	margin-top: var(--gap-sm);
+}
+
+.queue .queue-item {
+	--_state-size: 50px;
+
+	display: grid;
+	grid-template-columns: var(--_state-size) 1fr;
+	align-items: center;
+	gap: var(--gap-sm) var(--gap-md);
+	padding: var(--gap-md);
+	background: hsl(var(--base-color));
+	border-radius: var(--radius-md);
+	margin-top: var(--gap-sm);
+
+  @container (width < 800px) {
+    --_state-size: 80px;
+    display: flex;
+    flex-flow: column;
+
+    .queue-item-info {
+      display: flex !important;
+      flex-flow: column nowrap;
+      align-items: center;
+      text-align: center;
+    }
+
+    .queue-item-state {
+      width: 100%;
+      display: grid;
+      place-content: center;
+      text-align: center;
+    }
+  }
+}
+
+.queue .queue-item .queue-item-icon {
+	position: relative;
+	display: grid;
+	place-items: center;
+	width: var(--_state-size);
+	height: var(--_state-size);
+	border-radius: var(--radius-md);
+	background: conic-gradient(
+		from 0.5turn,
+		/* Remote */
+		var(--_color) 0%,
+		var(--_color) var(--_progress),
+		/* Local if possible */
+		/* The rest */
+		transparent var(--_progress),
+		transparent 100%
+	);
+	isolation: isolate;
+}
+
+.queue .queue-item .queue-item-icon::before {
+	content: "";
+	position: absolute;
+	inset: 4px;
+	border-radius: var(--radius-sm);
+	background-color: hsl(var(--surface-0-color));
+}
+
+.queue .queue-item .queue-item-icon svg {
+	position: relative;
+	width: calc(var(--_state-size) * 0.5);
+	height: calc(var(--_state-size) * 0.5);
+	color: var(--_color);
+	z-index: 5;
+}
+
+.queue .queue-item .queue-item-info {
+	display: grid;
+	grid-template-columns: 50% 1fr;
+	justify-content: space-between;
+  align-items: center;
+	gap: var(--gap-md);
+	width: 100%;
+}
+
+.queue .queue-item .queue-item-info .queue-item-main-info {
+	display: flex;
+	flex-flow: column;
+	gap: var(--gap-sm);
+  max-width: 100%;
+}
+
+.queue .queue-item .queue-item-info .queue-item-main-info .queue-item-url {
+	font-weight: 600;
+	font-size: var(--font-md);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+
+.queue .queue-item .queue-item-info .queue-item-other-info {
+  flex-grow: 1;
+	display: flex;
+	flex-flow: row wrap;
+	justify-content: space-between;
+  align-items: center;
+	gap: var(--gap-md);
+}
+
+.queue .queue-item .queue-item-state {
+	grid-column: 1 / span 2;
+	border-top: 2px solid hsl(var(--surface-1-color));
+	padding-top: var(--gap-sm);
+	display: flex;
+}

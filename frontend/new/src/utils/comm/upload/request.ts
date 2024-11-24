@@ -4,6 +4,13 @@ import type UploadRequest from "../../../types/UploadRequest";
 import type UploadRequestResponse from "../../../types/UploadRequestResponse";
 import { getModuleRoute } from "../../staticRoutes";
 
+/**
+ * Requests an upload to the server.
+ *
+ * @param {FileUploadInfo} file Information about the file to upload.
+ * @param {string} [hash] The hash of the file to upload. (optional, defaults to an empty string)
+ * @returns {Promise<UploadRequestResponse>} A promise that resolves with the server's response.
+ */
 export function uploadRequest(file: FileUploadInfo, hash?: string): Promise<UploadRequestResponse> {
   const url = getModuleRoute("UPLOAD_REQUEST");
   const token = getToken();

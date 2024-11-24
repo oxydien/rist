@@ -28,4 +28,7 @@ main {
   padding-inline: var(--gap-md);
   overflow-y: auto;
   max-height: 100dvh;
+
+  container-type: inline-size;
+  container-name: main-content;
 }

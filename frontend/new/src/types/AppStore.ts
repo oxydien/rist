@@ -6,6 +6,8 @@ export default interface AppStore {
   role: number;
   modules: ModuleInfo[];
   serverInfo: ServerInfo | null,
+  asideOpen: boolean,
+  toggleAside: () => void
   updateToken: (token: string) => void
   updateRole: (role: number) => void
   updateModules: (modules: ModuleInfo[]) => void

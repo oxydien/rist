@@ -15,6 +15,7 @@
   inset: 0;
   color: transparent;
   cursor: pointer;
+  opacity: 0;
 }
 
 .big-file-input-label {

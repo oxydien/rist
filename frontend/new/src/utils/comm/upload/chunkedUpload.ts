@@ -7,125 +7,129 @@ import type UploadRequestResponse from "../../../types/UploadRequestResponse";
 import type UploadResponse from "../../../types/UploadResponse";
 import type UploadStatus from "../../../types/UploadStatus";
 import { getModuleRoute } from "../../staticRoutes";
-import { rateLimitGuard } from "../_default";
+import { relaxedRateLimitGuard } from "../_default";
 import RequestQueue from "../requestQueue";
 
 export default async function chunkedUpload(
-  fileInfo: FileUploadInfo,
-  uuid: string,
-  requestResponse: UploadRequestResponse,
-  callback: (progress: UploadStatus) => void
+	fileInfo: FileUploadInfo,
+	uuid: string,
+	requestResponse: UploadRequestResponse,
+	callback: (progress: UploadStatus) => void,
 ): Promise<UploadResponse> {
-  if (!fileInfo.blob) {
-    throw new Error("Blob is null");
-  }
-  if (!requestResponse.upload_parts) {
-    throw new Error("Number of parts not specified");
-  }
+	if (!fileInfo.blob) {
+		throw new Error("Blob is null");
+	}
+	if (!requestResponse.upload_parts) {
+		throw new Error("Number of parts not specified");
+	}
 
-  const CHUNK_SIZE = Math.ceil(fileInfo.size / requestResponse.upload_parts);
-  let uploadedBytes = 0;
-  let currentPart = 0;
+	const CHUNK_SIZE = Math.ceil(fileInfo.size / requestResponse.upload_parts);
+	let uploadedBytes = 0;
+	let currentPart = 0;
 
-  const fileBuffer = await fileInfo.blob.arrayBuffer();
+	const fileBuffer = await fileInfo.blob.arrayBuffer();
 
-  // Update initial status
-  callback({
-    upload_method: fileInfo.uploadMethod,
-    state: FileState.ReadyToUpload,
-    total_bytes: fileInfo.size,
-    uploaded_bytes: 0,
-    parts: [0, 0],
-  });
+	// Update initial status
+	callback({
+		upload_method: fileInfo.uploadMethod,
+		state: FileState.ReadyToUpload,
+		total_bytes: fileInfo.size,
+		uploaded_bytes: 0,
+		parts: [0, 0],
+	});
 
-  // Get base URL
-  const baseUrl = getModuleRoute("UPLOAD_PART")?.replace("<uuid>", uuid);
-  const token = getToken();
+	// Get base URL
+	const baseUrl = getModuleRoute("UPLOAD_PART")?.replace("<uuid>", uuid);
+	const token = getToken();
 
-  if (!baseUrl) {
-    throw new Error("Failed to get base URL");
-  }
+	if (!baseUrl) {
+		throw new Error("Failed to get base URL");
+	}
 
-  if (!token) {
-    throw new Error("Token not found");
-  }
+	if (!token) {
+		throw new Error("Token not found");
+	}
 
-  const queue = new RequestQueue(8, rateLimitGuard, 5);
+	const queue = new RequestQueue(8, relaxedRateLimitGuard, 5);
 
-  for (let i = 0; i < requestResponse.upload_parts; i++) {
-    const start = i * CHUNK_SIZE;
-    const end = Math.min(start + CHUNK_SIZE, fileInfo.size);
-    const chunkData = fileBuffer.slice(start, end);
+	for (let i = 0; i < requestResponse.upload_parts; i++) {
+		const start = i * CHUNK_SIZE;
+		const end = Math.min(start + CHUNK_SIZE, fileInfo.size);
+		const chunkData = fileBuffer.slice(start, end);
 
-    const uploadChunk: () => Promise<UploadResponse | UploadError> = async () => {
-      try {
-        const response = await fetch(baseUrl.replace("<part_number>", i.toString()), {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: chunkData,
-        });
+		const uploadChunk: () => Promise<UploadResponse | UploadError> =
+			async () => {
+				try {
+					const response = await fetch(
+						baseUrl.replace("<part_number>", i.toString()),
+						{
+							method: "POST",
+							headers: {
+								Authorization: `Bearer ${token}`,
+							},
+							body: chunkData,
+						},
+					);
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+					if (!response.ok) {
+						throw new Error(`HTTP error! status: ${response.status}`);
+					}
 
-        // Update progress
-        uploadedBytes += end - start;
-        currentPart++;
+					// Update progress
+					uploadedBytes += end - start;
+					currentPart++;
 
-        callback({
-          upload_method: fileInfo.uploadMethod,
-          state: FileState.Uploading,
-          total_bytes: fileInfo.size,
-          uploaded_bytes: uploadedBytes,
-          parts: [currentPart, requestResponse.upload_parts ?? 0 + 1],
-        });
+					callback({
+						upload_method: fileInfo.uploadMethod,
+						state: FileState.Uploading,
+						total_bytes: fileInfo.size,
+						uploaded_bytes: uploadedBytes,
+						parts: [currentPart, requestResponse.upload_parts ?? 0 + 1],
+					});
 
-        updateUploadLocalProgress(uuid, uploadedBytes);
+					updateUploadLocalProgress(uuid, uploadedBytes);
 
-        return response.json();
-      } catch (error) {
-        console.error(`Chunk ${i} failed:`, error);
-        throw error;
-      }
-    };
+					return response.json();
+				} catch (error) {
+					console.error(`Chunk ${i} failed:`, error);
+					throw error;
+				}
+			};
 
-    queue.add(uploadChunk);
-  }
+		queue.add(uploadChunk);
+	}
 
-  try {
-    const responses: UploadResponse[] = [];
+	try {
+		const responses: UploadResponse[] = [];
 
-    queue.on("requestFinished", (response: unknown) => {
-      const responseJson = response as UploadResponse;
-      responses.push(responseJson);
-    });
+		queue.on("requestFinished", (response: unknown) => {
+			const responseJson = response as UploadResponse;
+			responses.push(responseJson);
+		});
 
-    await queue.awaitZeroRequests();
+		await queue.awaitZeroRequests();
 
-    // Get the final response from the last chunk
-    const finalResponse = await responses[responses.length - 1];
+		// Get the final response from the last chunk
+		const finalResponse = await responses[responses.length - 1];
 
-    callback({
-      upload_method: fileInfo.uploadMethod,
-      state: FileState.Completed,
-      total_bytes: fileInfo.size,
-      uploaded_bytes: fileInfo.size,
-      parts: [requestResponse.upload_parts, requestResponse.upload_parts],
-    });
+		callback({
+			upload_method: fileInfo.uploadMethod,
+			state: FileState.Completed,
+			total_bytes: fileInfo.size,
+			uploaded_bytes: fileInfo.size,
+			parts: [requestResponse.upload_parts, requestResponse.upload_parts],
+		});
 
-    return finalResponse;
-  } catch (error) {
-    callback({
-      upload_method: fileInfo.uploadMethod,
-      state: FileState.Error,
-      total_bytes: fileInfo.size,
-      uploaded_bytes: uploadedBytes,
-      parts: [currentPart, requestResponse.upload_parts],
-    });
+		return finalResponse;
+	} catch (error) {
+		callback({
+			upload_method: fileInfo.uploadMethod,
+			state: FileState.Error,
+			total_bytes: fileInfo.size,
+			uploaded_bytes: uploadedBytes,
+			parts: [currentPart, requestResponse.upload_parts],
+		});
 
-    throw error;
-  }
+		throw error;
+	}
 }

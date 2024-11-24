@@ -110,13 +110,25 @@ impl FileDB {
     expires_at: u64,
     upload_method: UploadMethod,
   ) -> Result<(), sqlx::Error> {
+    self.add_and_get_from_request(uuid, file_name, file_size, expires_at, upload_method, false).await.map(|_| ())
+  }
+
+  pub async fn add_and_get_from_request(
+    &self,
+    uuid: &str,
+    file_name: String,
+    file_size: u64,
+    expires_at: u64,
+    upload_method: UploadMethod,
+    get: bool
+  ) -> Result<Option<File>, sqlx::Error> {
     let state = state::State::get()
       .await
       .map_err(|_| sqlx::Error::WorkerCrashed)?;
 
     let path = format!("{}{}", state.config.upload.upload_location, uuid);
 
-    sqlx::query("INSERT INTO Files (uuid, path, hash, name, size, created, expires_at, access_count, upload_method, file_state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    let result = sqlx::query("INSERT INTO Files (uuid, path, hash, name, size, created, expires_at, access_count, upload_method, file_state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
             .bind(uuid)
             .bind(path)
             .bind("-")
@@ -129,7 +141,18 @@ impl FileDB {
             .bind(FileState::AwaitingData.as_u8())
             .execute(&self.pool) 
             .await
-            .map(|_| ())
+            .map(|_| ());
+
+    match result {
+      Ok(_) => {}
+      Err(e) => return Err(e),
+    }
+
+    if get {
+      self.get_by_uuid(uuid).await
+    } else {
+      Ok(None)
+    }
   }
 
   pub async fn get_by_uuid(&self, uuid: &str) -> Result<Option<File>, sqlx::Error> {

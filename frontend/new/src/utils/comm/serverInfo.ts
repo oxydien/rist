@@ -1,29 +1,31 @@
+import { getToken } from "../../stores/appStore";
 import type ServerInfo from "../../types/ServerInfo";
 import { getRoute, moduleRoutes } from "../staticRoutes";
 
 export function getServerInfo(): Promise<Response> {
-  return fetch(getRoute("SERVER_INFO"), {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+	return fetch(getRoute("SERVER_INFO"), {
+		method: "GET",
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${getToken()}`,
+		},
+	});
 }
 
 export async function infoProcess(): Promise<ServerInfo> {
-  const response = await getServerInfo();
+	const response = await getServerInfo();
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
+	if (!response.ok) {
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
 
-  const data = await response.json() as ServerInfo;
+	const data = (await response.json()) as ServerInfo;
 
-  for (const module of data.modules) {
-    for (const route of module.apiRoutes) {
-      moduleRoutes[route[0]] = route[1];
-    }
-  }
+	for (const module of data.modules) {
+		for (const [key, value] of Object.entries(module.api_routes)) {
+			moduleRoutes[key] = value;
+		}
+	}
 
-  return data;
+	return data;
 }

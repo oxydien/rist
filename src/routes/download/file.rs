@@ -27,13 +27,7 @@ pub async fn download_file(uuid: &str) -> Result<DownloadResponse, DownloadError
         message: String::from("File is not ready to be downloaded"),
       })
     }
-    None => {
-      return Err(DownloadError {
-        status: Status::NotFound,
-        kind: DownloadErrorKind::NotFound,
-        message: String::from("File not found"),
-      })
-    }
+    None => {}
   }
 
   let db_file = match state.file_db.get_by_uuid(uuid).await {
@@ -99,6 +93,8 @@ pub async fn download_file(uuid: &str) -> Result<DownloadResponse, DownloadError
     finished: true,
     filename: db_file.name,
     data: content,
-    file_type: db_file.file_type.unwrap_or(crate::file_type::FileType::Unknown),
+    file_type: db_file
+      .file_type
+      .unwrap_or(crate::file_type::FileType::Unknown),
   })
 }

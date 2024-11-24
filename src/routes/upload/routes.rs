@@ -3,7 +3,7 @@ use rocket_governor::RocketGovernor;
 
 use crate::{
   db::user::PermissionKind,
-  routes::{BaseRateLimitGuard, RateLimitGuard, TokenAuth},
+  routes::{RelaxedRateLimitGuard, StandardRateLimitGuard, TokenAuth},
 };
 
 use super::{
@@ -12,7 +12,7 @@ use super::{
 
 #[get("/api/upload_status/<uuid>")]
 pub async fn get_upload_status<'r>(
-  _brt: RocketGovernor<'r, BaseRateLimitGuard>,
+  _brt: RocketGovernor<'r, RelaxedRateLimitGuard>,
   uuid: &str,
 ) -> Result<Json<UploadStatus>, Status> {
   super::status::get_upload_status(uuid).await
@@ -20,7 +20,7 @@ pub async fn get_upload_status<'r>(
 
 #[post("/api/upload/request", format = "json", data = "<data>")]
 pub async fn request_upload<'r>(
-  _rt: RocketGovernor<'r, RateLimitGuard>,
+  _rt: RocketGovernor<'r, StandardRateLimitGuard>,
   auth: TokenAuth,
   data: Json<UploadRequest>,
 ) -> Result<Json<UploadRequestResponse>, UploadError> {
@@ -31,7 +31,7 @@ pub async fn request_upload<'r>(
 
 #[post("/api/upload/<uuid>", data = "<data>")]
 pub async fn upload_file_whole<'r>(
-  _srt: RocketGovernor<'r, RateLimitGuard>,
+  _srt: RocketGovernor<'r, StandardRateLimitGuard>,
   auth: TokenAuth,
   uuid: &str,
   data: Data<'_>,
@@ -45,7 +45,7 @@ pub async fn upload_file_whole<'r>(
 
 #[post("/api/upload/part/<uuid>/<part_number>", data = "<data>")]
 pub async fn upload_file_part<'r>(
-  _srt: RocketGovernor<'r, BaseRateLimitGuard>,
+  _srt: RocketGovernor<'r, RelaxedRateLimitGuard>,
   auth: TokenAuth,
   uuid: &str,
   part_number: u32,

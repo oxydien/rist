@@ -1,27 +1,24 @@
 use std::{
   collections::HashMap,
-  fs::{self, File},
-  io::{Cursor, Write},
+  io::Cursor,
 };
 
 use regex::Regex;
 use rocket::{
-  http::{ContentType, Header, Status},
+  http::{ContentType, Status},
   response, Request, Response,
 };
 use rocket_governor::RocketGovernor;
 use serde::Serialize;
 use serde_json::{json, Value};
-use uuid::Uuid;
 
 use crate::{
-  db::{user::PermissionKind, video::Video},
+  db::user::PermissionKind,
   module::{GetModule, Module},
-  state::State,
   utils,
 };
 
-use super::{StrictRateLimitGuard, TokenAuth};
+use super::{upload::url::upload_from_url, StrictRateLimitGuard, TokenAuth};
 
 // MARK: Module
 pub struct MedalModule;
@@ -52,7 +49,6 @@ pub enum MedalResponse {
 pub struct MedalOutput {
   pub uuid: String,
   pub name: String,
-  pub path: String,
 }
 
 #[derive(Serialize)]
@@ -105,27 +101,16 @@ impl<'r, 'o: 'r> response::Responder<'r, 'o> for MedalError {
 }
 
 impl<'r, 'o: 'r> response::Responder<'r, 'o> for MedalOutput {
-  fn respond_to(self, req: &Request) -> rocket::response::Result<'o> {
-    let content = match fs::read(&self.path) {
-      Ok(val) => val,
-      Err(e) => {
-        eprintln!("Failed to read file at {:?}: {}", &&self.path, e);
-        return MedalError {
-          kind: MedalErrorKind::ServerIssue,
-          status: Status::InternalServerError,
-          message: e.to_string(),
-        }
-        .respond_to(&req);
-      }
-    };
+  fn respond_to(self, _: &Request) -> rocket::response::Result<'o> {
+    let mut res = Response::new();
 
-    let res = Response::build()
-      .header(Header::new(
-        "Content-Disposition",
-        format!("attachment; filename=\"{}.mp4\"", &self.name),
-      ))
-      .sized_body(content.len(), Cursor::new(content))
-      .finalize();
+    let body = json!({
+        "uuid": self.uuid,
+        "name": self.name
+    })
+    .to_string();
+    res.set_sized_body(body.len(), Cursor::new(body));
+    res.set_header(ContentType::new("application", "json"));
     Ok(res)
   }
 }
@@ -166,19 +151,12 @@ pub async fn download_medal_clip(
     None => "720p".to_string(),
   };
 
-  let state = match State::get().await {
-    Ok(state) => state,
-    Err(_) => {
-      return MedalResponse::Error(MedalError {
-        kind: MedalErrorKind::ServerIssue,
-        status: Status::InternalServerError,
-        message: "Failed to get state".to_string(),
-      });
-    }
-  };
-
+  // - Request base url
   let client = reqwest::Client::new();
-  let request = match client.get(url).build() {
+  let request = match client.get(url)
+    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
+    .header("Referer", "https://medal.tv/") // ;)
+    .build() {
     Ok(val) => val,
     Err(e) => {
       eprintln!("Failed to create a request: {}", e);
@@ -222,6 +200,7 @@ pub async fn download_medal_clip(
     }
   };
 
+  // - Search for hydration data
   let hydration_data_re = Regex::new(r#"var hydrationData=(\{.*\})"#).unwrap();
   let script_tag = match hydration_data_re.captures(&body) {
     Some(caps) => caps.get(1).map_or("", |m| m.as_str()),
@@ -277,6 +256,7 @@ pub async fn download_medal_clip(
     }
   };
 
+  // - Get content url from hydration data
   let content_search_str = format!("contentUrl{}", &quality_str);
   let content_url = match hydration_data["clips"][first_clip_id][content_search_str].as_str() {
     Some(url) => url.replace("144", &quality_str),
@@ -289,71 +269,27 @@ pub async fn download_medal_clip(
     }
   };
 
-  let uuid = Uuid::new_v4().to_string();
+  let expiration = utils::get_current_timestamp() + 65_321;
 
-  let output_path = format!(
-    "{}{}-{}",
-    &state.config.upload.upload_location, &uuid, &first_clip_id
-  );
-
-  let video = Video {
-    uuid: uuid.clone(),
-    user: auth.0.id.clone(),
-    quality: quality.unwrap_or(12),
-    format: 0,
-    vid_id: first_clip_id.to_string(),
-    name: title.to_string(),
-    path: output_path.clone(),
-    created: utils::get_current_timestamp().to_string(),
-    expires_at: (utils::get_current_timestamp() + 65_321).to_string(),
-  };
-
+  // Download the clip
   println!("[INFO   ] Downloading medal clip from: {}", &content_url);
-  let data_request = client.get(content_url);
-  let data_response = match data_request.send().await {
-    Ok(val) => val,
-    Err(e) => {
-      eprintln!("Failed to download medal clip: {}", e);
-      return MedalResponse::Error(MedalError {
-        kind: MedalErrorKind::DownloadFailed,
-        status: Status::NotFound,
-        message: e.to_string(),
-      });
-    }
-  };
+  let upload_response = upload_from_url(content_url, expiration, Some(title.to_string())).await;
 
-  let mut file = match File::create(&output_path) {
-    Ok(val) => val,
-    Err(e) => {
-      eprintln!("Failed to create file: {}", e);
-      return MedalResponse::Error(MedalError {
-        kind: MedalErrorKind::DownloadFailed,
-        status: Status::NotFound,
-        message: e.to_string(),
-      });
+  match upload_response {
+    Ok(response) => {
+      println!("[INFO   ] Medal clip uploaded to: {}", &response.0.uuid);
+      MedalResponse::Ok(MedalOutput {
+        uuid: response.0.uuid,
+        name: title.to_string(),
+      })
     }
-  };
-
-  let body = match data_response.bytes().await {
-    Ok(val) => val,
     Err(e) => {
-      eprintln!("Failed to read response body: {}", e);
-      return MedalResponse::Error(MedalError {
+      println!("[ERROR  ] Failed to upload medal clip: {}", e);
+      MedalResponse::Error(MedalError {
         kind: MedalErrorKind::DownloadFailed,
-        status: Status::NotFound,
+        status: Status::InternalServerError,
         message: e.to_string(),
-      });
+      })
     }
-  };
-  file.write_all(&body).unwrap();
-
-  if let Err(e) = state.video_db.add(&video).await {
-    eprintln!("Failed to add video to database: {}", e);
   }
-
-  MedalResponse::Ok(MedalOutput {
-    uuid,
-    path: output_path,
-    name: title.to_string(),
-  })
 }
