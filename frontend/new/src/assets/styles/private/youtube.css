@@ -154,4 +154,5 @@
 	border-top: 2px solid hsl(var(--surface-1-color));
 	padding-top: var(--gap-sm);
 	display: flex;
+	gap: var(--gap-md)
 }

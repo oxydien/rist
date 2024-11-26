@@ -58,7 +58,7 @@
 	border-radius: var(--radius-md);
 	margin-top: var(--gap-sm);
 
-  @container (width < 800px) {
+  @container (width < 700px) {
     --_state-size: 80px;
     display: flex;
     flex-flow: column;
@@ -155,4 +155,5 @@
 	border-top: 2px solid hsl(var(--surface-1-color));
 	padding-top: var(--gap-sm);
 	display: flex;
+	gap: var(--gap-md)
 }

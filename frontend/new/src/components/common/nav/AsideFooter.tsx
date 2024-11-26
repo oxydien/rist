@@ -1,4 +1,5 @@
 import "../../../assets/styles/common/nav/asidefooter.css";
+import { logout } from "../../../utils/comm/auth";
 import CloseNavIcon from "../../icons/CloseNavIcon";
 import LogOutIcon from "../../icons/LogOutIcon";
 import OpenNavIcon from "../../icons/OpenNavIcon";
@@ -11,7 +12,9 @@ interface AsideFooterProps {
 }
 
 export default function AsideFooter({ ...props }: AsideFooterProps) {
-  const handleLogOut = () => {};
+  const handleLogOut = () => {
+    logout();
+  };
   const handleToggleNav = () => {
     props.setIsOpen(!props.isOpen);
   };

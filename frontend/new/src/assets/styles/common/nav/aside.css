@@ -28,6 +28,11 @@
 		width: 100%;
 		max-width: var(--aside-width);
 		background-color: hsl(var(--base-color) / 1) !important;
+		box-shadow: var(--shadow-md);
+	}
+
+	.aside.aside-open {
+		box-shadow: var(--shadow-lg);
 	}
 
 	.aside .mobile-toggle {

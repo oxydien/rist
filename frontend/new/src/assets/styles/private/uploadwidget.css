@@ -54,6 +54,9 @@
 
 .file-info .file-name {
   flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .file-info .file-info-line {

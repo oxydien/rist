@@ -16,7 +16,7 @@ const standardRateLimitGuard = new RateLimiterFactory()
 	.setInterval("minute")
 	.build();
 
-const strictRateLimit = 2;
+const strictRateLimit = 4;
 const strictRateLimitGuard = new RateLimiterFactory()
 	.setRate(strictRateLimit)
 	.setInterval("minute")

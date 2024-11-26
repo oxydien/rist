@@ -7,63 +7,75 @@ import {
 	type DownloadProgress,
 	type VideoQuality,
 	QUALITY_OPTIONS,
+	type MedalState,
+	addToQueue,
 } from "../../utils/comm/modules/medal";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { getIcon } from "../../utils/iconReg";
 import Input from "../../components/common/Input";
 import ChipsSelect from "../../components/common/ChipsSelect";
+import { useAppStore } from "../../stores/appStore";
 
 interface MedalRequest extends MedalDownloadOptions {
 	state?: DownloadProgress;
-	started: boolean;
 }
 
 export default function MedalPage() {
 	import("../../assets/styles/private/main.css");
 	import("../../assets/styles/private/medal.css");
 
-	const [queue, setQueue] = useState<MedalRequest[]>([]);
 	const [url, setUrl] = useState<string>("");
 	const [quality, setQuality] = useState<VideoQuality>("4");
 
+	// Local queue, react does not support Maps :/
+	const [localQueue, setLocalQueue] = useState<{
+		[key: string]: DownloadProgress;
+	}>({});
+
+	const getQueue = (): { [key: string]: DownloadProgress } => {
+		return (
+			((useAppStore.getState().getModuleData("medal") as MedalState) ?? null)
+				?.ongoingDownloads ?? {}
+		);
+	};
+
 	const getExisting = (rq: MedalRequest) => {
-		return queue.findIndex(
+		return Object.values(getQueue()).findIndex(
 			(item) => item.url === rq.url && item.quality === rq.quality,
 		);
 	};
 
-	const canRequest = (rq: MedalRequest) => {
-		return (
-			getExisting(rq) === -1 &&
-			queue.every(
-				(item) =>
-					!item.started ||
-					item.state?.status === "completed" ||
-					item.state?.status === "error",
-			)
-		);
+	const canRequest = () => {
+		const allConditionsMet = Object.values(getQueue()).every((item) => {
+			const condition = !item.startedAt || item.status === "completed" || item.status === "error";
+			console.debug("Checking item:", item, "Condition met:", condition);
+			return condition;
+		});
+
+		console.debug("All conditions met:", allConditionsMet);
+		return allConditionsMet;
 	};
 
 	const addRequest = (rq: MedalRequest) => {
 		if (getExisting(rq) !== -1) return;
-		setQueue([...queue, rq]);
+		addToQueue(rq.url + rq.quality + Date.now(), rq);
 	};
 
-	const getIconState = (rq: MedalRequest) => {
-		if (!rq.started) return "file-time";
-		if (rq.state?.status === "requesting") return "cogs";
-		if (rq.state?.status === "downloading") return "database-share";
-		if (rq.state?.status === "completed") return "check";
-		if (rq.state?.status === "error") return "error";
+	const getIconState = (dp: DownloadProgress) => {
+		if (!dp.startedAt) return "file-time";
+		if (dp.status === "requesting") return "cogs";
+		if (dp.status === "downloading") return "database-share";
+		if (dp.status === "completed") return "check";
+		if (dp.status === "error") return "error";
 		return "progress-help";
 	};
 
-	const getColorState = (rq: MedalRequest) => {
-		if (!rq.started) return "yellow";
-		if (rq.state?.status === "requesting") return "mauve";
-		if (rq.state?.status === "downloading") return "green";
-		if (rq.state?.status === "completed") return "teal";
-		if (rq.state?.status === "error") return "maroon";
+	const getColorState = (dp: DownloadProgress) => {
+		if (!dp.startedAt || dp.status === "queued") return "yellow";
+		if (dp.status === "requesting") return "mauve";
+		if (dp.status === "downloading") return "green";
+		if (dp.status === "completed") return "teal";
+		if (dp.status === "error") return "maroon";
 		return "peach";
 	};
 
@@ -86,54 +98,39 @@ export default function MedalPage() {
 		addRequest({
 			url,
 			quality,
-			started: false,
 		});
 	};
 
-	const onRequestProgress = (rq: MedalRequest, progress: DownloadProgress) => {
-		setQueue((prev) =>
-			prev.map((item) => {
-				if (item.url === rq.url && item.quality === rq.quality) {
-					return { ...item, state: progress };
-				}
-				return item;
-			}),
-		);
-	};
-
-	const triggerDownload = useCallback((rq: MedalRequest) => {
-		if (!rq.state?.downloadUrl) return;
+	const triggerDownload = useCallback((dp: DownloadProgress) => {
+		if (!dp.downloadUrl) return;
 
 		const link = document.createElement("a");
-		link.href = rq.state.downloadUrl;
-		link.download = rq.state.filename || "file";
+		link.href = dp.downloadUrl;
+		link.download = dp.filename || "file";
 		link.click();
 		link.remove();
 	}, []);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: yes
 	useEffect(() => {
-		const interval = setInterval(
-			() =>
-				setQueue((prev) =>
-					prev.map((rq) => {
-						if (!rq.started && canRequest(rq)) {
-							downloadMedal(
-								{
-									url: rq.url,
-									quality: rq.quality,
-								},
-								(progress) => {
-									onRequestProgress(rq, progress);
-								},
-							);
-							return { ...rq, started: true };
-						}
-						return rq;
-					}),
-				),
-			1000,
-		);
+		const interval = setInterval(() => {
+			// Update local queue
+			const queue = getQueue();
+			setLocalQueue(queue);
+
+			// Check and start unstarted requests
+			for (const key in queue) {
+				const item = getQueue()[key];
+				if (!item.startedAt && item.url && item.quality) {
+					if (canRequest()) {
+						downloadMedal(key, {
+							url: item.url,
+							quality: item.quality,
+						});
+					}
+				}
+			}
+		}, 150);
 
 		return () => clearInterval(interval);
 	}, []);
@@ -185,70 +182,69 @@ export default function MedalPage() {
 					</div>
 				</form>
 				<div className="queue">
-					{queue?.map((request, index) => (
-						<div
-							className="queue-item"
-							key={request.url + request.quality || index}
-						>
-							<div
-								className="queue-item-icon"
-								style={{
-									"--_color": `hsl(var(--${getColorState(request)}-color))`,
-									"--_progress": `${request.state?.progress || 100}%`,
-								}}
-							>
-								{getIcon(getIconState(request))({})}
-							</div>
-							<div className="queue-item-info">
-								<div className="queue-item-main-info">
-									<div className="queue-item-status">
-										{request.state?.status || "Queued"}
+					{Object.entries(localQueue).map(
+						([key, state]: [string, DownloadProgress], index) => (
+							<div className="queue-item" key={key || index}>
+								<div
+									className="queue-item-icon"
+									style={{
+										"--_color": `hsl(var(--${getColorState(state)}-color))`,
+										"--_progress": `${state.progress || 100}%`,
+									}}
+								>
+									{getIcon(getIconState(state))({})}
+								</div>
+								<div className="queue-item-info">
+									<div className="queue-item-main-info">
+										<div className="queue-item-status">
+											{state.status || "Queued"}
+										</div>
+										<div className="queue-item-url" title={state.url}>
+											{state.url}
+										</div>
 									</div>
-									<div className="queue-item-url" title={request.url}>
-										{request.url}
+									<div className="queue-item-other-info">
+										<span className="queue-item-quality">
+											{
+												Object.entries(QUALITY_OPTIONS).find(
+													([_, value]) => value === state.quality,
+												)?.[0]
+											}
+										</span>
+										{state.downloadUrl && (
+											<Button
+												variant="primary"
+												onClick={() => {
+													triggerDownload(state);
+												}}
+												onKeyUp={(e?: KeyboardEvent) => {
+													if (e?.key === "Enter") {
+														triggerDownload(state);
+													}
+												}}
+											>
+												Download
+											</Button>
+										)}
 									</div>
 								</div>
-								<div className="queue-item-other-info">
-									<span className="queue-item-quality">
-										{
-											Object.entries(QUALITY_OPTIONS).find(
-												([_, value]) => value === request.quality,
-											)?.[0]
-										}
-									</span>
-									{request.state?.downloadUrl && (
-										<Button
-											variant="primary"
-											onClick={() => {
-												triggerDownload(request);
-											}}
-											onKeyUp={(e?: KeyboardEvent) => {
-												if (e?.key === "Enter") {
-													triggerDownload(request);
-												}
-											}}
-										>
-											Download
-										</Button>
-									)}
-								</div>
+								{(state.progress || state.message) && (
+									<div className="queue-item-state">
+										{state.progress !== undefined && (
+											<span className="queue-item-progress">
+												{Math.round(state.progress)}%{" "}
+											</span>
+										)}
+										{state.message && (
+											<span className="queue-item-message">
+												{state.message}
+											</span>
+										)}
+									</div>
+								)}
 							</div>
-							{request.state && (
-								<div className="queue-item-state">
-									{request.state.progress !== undefined && (
-										<span className="queue-item-progress">
-											{Math.round(request.state.progress)}%
-										</span>
-									)}
-									{request.state.message && (
-										<span className="queue-item-message">
-											{request.state.message}
-										</span>
-									)}
-								</div>
-							)}
-						</div>
-					))}
+						),
+					)}
 				</div>
 			</main>
 		</PageWrapper>

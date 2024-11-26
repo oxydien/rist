@@ -82,6 +82,6 @@ impl<'r> RocketGovernable<'r> for StandardRateLimitGuard {
 
 impl<'r> RocketGovernable<'r> for StrictRateLimitGuard {
   fn quota(_method: rocket_governor::Method, _route_name: &str) -> Quota {
-    Quota::per_minute(Self::nonzero(2))
+    Quota::per_minute(Self::nonzero(4))
   }
 }

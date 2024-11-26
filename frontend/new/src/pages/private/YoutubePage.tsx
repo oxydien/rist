@@ -2,7 +2,9 @@ import Button from "../../components/common/Button";
 import Aside from "../../components/common/nav/Aside";
 import PageWrapper from "./PageWrapper";
 import {
+	addToQueue,
 	downloadYoutube,
+	type YoutubeState,
 	type DownloadOptions,
 	type DownloadProgress,
 } from "../../utils/comm/modules/youtube";
@@ -10,23 +12,32 @@ import { useCallback, useEffect, useState } from "preact/hooks";
 import { getIcon } from "../../utils/iconReg";
 import Input from "../../components/common/Input";
 import ChipsSelect from "../../components/common/ChipsSelect";
+import { useAppStore } from "../../stores/appStore";
 
 interface YoutubeRequest extends DownloadOptions {
 	state?: DownloadProgress;
-	started: boolean;
 }
 
 export default function YoutubePage() {
 	import("../../assets/styles/private/main.css");
 	import("../../assets/styles/private/youtube.css");
 
-	const [queue, setQueue] = useState<YoutubeRequest[]>([]);
+	const [localQueue, setLocalQueue] = useState<{
+		[key: string]: DownloadProgress;
+	}>({});
 	const [url, setUrl] = useState<string>("");
 	const [format, setFormat] = useState<DownloadOptions["format"]>("AudioMp3");
 	const [quality, setQuality] = useState<DownloadOptions["quality"]>("Best");
 
+	const getQueue = (): { [key: string]: DownloadProgress } => {
+		return (
+			((useAppStore.getState().getModuleData("yt") as YoutubeState) ?? null)
+				?.ongoingDownloads ?? {}
+		);
+	};
+
 	const getExisting = (rq: YoutubeRequest) => {
-		return queue.findIndex(
+		return Object.values(getQueue()).findIndex(
 			(item) =>
 				item.url === rq.url &&
 				item.format === rq.format &&
@@ -34,40 +45,40 @@ export default function YoutubePage() {
 		);
 	};
 
-	const canRequest = (rq: YoutubeRequest) => {
-		return (
-			getExisting(rq) === -1 &&
-			queue.every(
-				(item) =>
-					!item.started ||
-					item.state?.status === "completed" ||
-					item.state?.status === "error",
-			)
-		);
+	const canRequest = () => {
+		const allConditionsMet = Object.values(getQueue()).every((item) => {
+			const condition =
+				!item.startedAt ||
+				item.status === "completed" ||
+				item.status === "error";
+			return condition;
+		});
+
+		return allConditionsMet;
 	};
 
 	const addRequest = (rq: YoutubeRequest) => {
 		if (getExisting(rq) !== -1) return;
-		setQueue([...queue, rq]);
+		addToQueue(rq.url + rq.quality + Date.now(), rq);
 	};
 
-	const getIconState = (rq: YoutubeRequest) => {
-		if (!rq.started) return "file-time";
-		if (rq.state?.status === "requesting") return "cogs";
-		if (rq.state?.status === "uploading") return "upload";
-		if (rq.state?.status === "downloading") return "database-share";
-		if (rq.state?.status === "completed") return "check";
-		if (rq.state?.status === "error") return "error";
+	const getIconState = (dp: DownloadProgress) => {
+		if (!dp.startedAt) return "file-time";
+		if (dp.status === "requesting") return "cogs";
+		if (dp.status === "uploading") return "upload";
+		if (dp.status === "downloading") return "database-share";
+		if (dp.status === "completed") return "check";
+		if (dp.status === "error") return "error";
 		return "progress-help";
 	};
 
-	const getColorState = (rq: YoutubeRequest) => {
-		if (!rq.started) return "yellow";
-		if (rq.state?.status === "requesting") return "mauve";
-		if (rq.state?.status === "uploading") return "lavender";
-		if (rq.state?.status === "downloading") return "green";
-		if (rq.state?.status === "completed") return "teal";
-		if (rq.state?.status === "error") return "maroon";
+	const getColorState = (dp: DownloadProgress) => {
+		if (!dp.startedAt || dp.status === "queued") return "yellow";
+		if (dp.status === "requesting") return "mauve";
+		if (dp.status === "uploading") return "lavender";
+		if (dp.status === "downloading") return "green";
+		if (dp.status === "completed") return "teal";
+		if (dp.status === "error") return "maroon";
 		return "peach";
 	};
 
@@ -91,62 +102,40 @@ export default function YoutubePage() {
 			url,
 			format,
 			quality,
-			started: false,
 		});
 	};
 
-	const onRequestProgress = (
-		rq: YoutubeRequest,
-		progress: DownloadProgress,
-	) => {
-		setQueue((prev) =>
-			prev.map((item) => {
-				if (
-					item.url === rq.url &&
-					item.format === rq.format &&
-					item.quality === rq.quality
-				) {
-					return { ...item, state: progress };
-				}
-				return item;
-			}),
-		);
-	};
-
-	const triggerDownload = useCallback((rq: YoutubeRequest) => {
-		if (!rq.state?.downloadUrl) return;
+	const triggerDownload = useCallback((dp: DownloadProgress) => {
+		if (!dp.downloadUrl) return;
 
 		const link = document.createElement("a");
-		link.href = rq.state.downloadUrl;
-		link.download = rq.state.filename || "file";
+		link.href = dp.downloadUrl;
+		link.download = dp.filename || "file";
 		link.click();
 		link.remove();
 	}, []);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: yes
 	useEffect(() => {
-		const interval = setInterval(
-			() =>
-				setQueue((prev) =>
-					prev.map((rq) => {
-						if (!rq.started && canRequest(rq)) {
-							downloadYoutube(
-								{
-									url: rq.url,
-									format: rq.format,
-									quality: rq.quality,
-								},
-								(progress) => {
-									onRequestProgress(rq, progress);
-								},
-							);
-							return { ...rq, started: true };
-						}
-						return rq;
-					}),
-				),
-			1000,
-		);
+		const interval = setInterval(() => {
+			// Update local queue
+			const queue = getQueue();
+			setLocalQueue(queue);
+
+			// Check and start unstarted requests
+			for (const key in queue) {
+				const item = getQueue()[key];
+				if (!item.startedAt && item.url && item.quality && item.format) {
+					if (canRequest()) {
+						downloadYoutube(key, {
+							url: item.url,
+							quality: item.quality,
+							format: item.format,
+						});
+					}
+				}
+			}
+		}, 150);
 
 		return () => clearInterval(interval);
 	}, []);
@@ -206,65 +195,68 @@ export default function YoutubePage() {
 					</div>
 				</form>
 				<div className="queue">
-					{queue?.map((request, index) => (
-						<div
-							className="queue-item"
-							key={request.url + request.format + request.quality || index}
-						>
-							<div
-								className="queue-item-icon"
-								style={{
-									"--_color": `hsl(var(--${getColorState(request)}-color))`,
-									"--_progress": `${request.state?.progress || 100}%`,
-								}}
-							>
-								{getIcon(getIconState(request))({})}
-							</div>
-							<div className="queue-item-info">
-								<div className="queue-item-main-info">
-									<div className="queue-item-status">
-										{request.state?.status || "Queued"}
+					{Object.entries(localQueue).map(
+						([key, state]: [string, DownloadProgress], index) => (
+							<div className="queue-item" key={key || index}>
+								<div
+									className="queue-item-icon"
+									style={{
+										"--_color": `hsl(var(--${getColorState(state)}-color))`,
+										"--_progress": `${state.progress || 100}%`,
+									}}
+								>
+									{getIcon(getIconState(state))({})}
+								</div>
+								<div className="queue-item-info">
+									<div className="queue-item-main-info">
+										<div className="queue-item-status">
+											{state.status || "queued"}
+										</div>
+										<div className="queue-item-url" title={state.url}>
+											{state.url}
+										</div>
 									</div>
-									<div className="queue-item-url" title={request.url}>
-										{request.url}
+									<div className="queue-item-other-info">
+										<span className="queue-item-format">{state.format}</span>
+										<span className="queue-item-quality">{state.quality}</span>
+										{state.downloadUrl && (
+											<Button
+												variant="primary"
+												onClick={() => {
+													triggerDownload(state);
+												}}
+												onKeyUp={(e?: KeyboardEvent) => {
+													if (e?.key === "Enter") {
+														triggerDownload(state);
+													}
+												}}
+											>
+												Download
+											</Button>
+										)}
 									</div>
 								</div>
-								<div className="queue-item-other-info">
-									<span className="queue-item-format">{request.format}</span>
-									<span className="queue-item-quality">{request.quality}</span>
-									{request.state?.downloadUrl && (
-										<Button
-											variant="primary"
-											onClick={() => {
-												triggerDownload(request);
-											}}
-											onKeyUp={(e?: KeyboardEvent) => {
-												if (e?.key === "Enter") {
-													triggerDownload(request);
-												}
-											}}
-										>
-											Download
-										</Button>
-									)}
-								</div>
+								{(state.error || state.message || state.progress) && (
+									<div className="queue-item-state">
+										{state.progress !== undefined && (
+											<span className="queue-item-progress">
+												{Math.round(state.progress)}%
+											</span>
+										)}
+										{state.error ? (
+											<span className="queue-item-error">{state.error}</span>
+										) : (
+											state.message && (
+												<span className="queue-item-message">
+													{state.message}
+												</span>
+											)
+										)}
+									</div>
+								)}
 							</div>
-							{request.state && (
-								<div className="queue-item-state">
-									{request.state.progress !== undefined && (
-										<span className="queue-item-progress">
-											{Math.round(request.state.progress)}%
-										</span>
-									)}
-									{request.state.message && (
-										<span className="queue-item-message">
-											{request.state.message}
-										</span>
-									)}
-								</div>
-							)}
-						</div>
-					))}
+						),
+					)}
 				</div>
 			</main>
 		</PageWrapper>

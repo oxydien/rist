@@ -9,6 +9,7 @@ export const useAppStore = create<AppStore>((set) => ({
 	modules: [],
 	serverInfo: null,
 	asideOpen: false,
+	moduleData: new Map<string, unknown>(),
 	toggleAside: () => set((state) => ({ asideOpen: !state.asideOpen })),
 	updateToken: (token: string) => set({ token }),
 	updateRole: (role: number) => set({ role }),
@@ -18,8 +19,23 @@ export const useAppStore = create<AppStore>((set) => ({
 			state.updateModules(serverInfo.modules);
 			return { serverInfo: { ...state.serverInfo, ...serverInfo } };
 		}),
+	
+	getModuleData: (key: string): unknown => {
+		return useAppStore.getState().moduleData.get(key);
+	},
+	updateModuleData: (key: string, value: unknown) => {
+		set((state) => {
+			const newData = new Map(state.moduleData);
+			newData.set(key, value);
+			return { moduleData: newData };
+		});
+	},
 }));
 
 export function getToken(): string | null {
 	return useAppStore.getState().token || localStorage.getItem("token");
+}
+
+export function isAuthorized(): boolean {
+	return useAppStore.getState().role >= 0 && getToken() !== null;
 }
