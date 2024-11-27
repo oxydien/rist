@@ -2,7 +2,7 @@ use rocket::{http::Status, serde::json::Json};
 use rocket_governor::RocketGovernor;
 use serde::Serialize;
 
-use crate::module::{GetModule, Module};
+use crate::{module::{GetModule, Module}, utils::get_software_repository};
 
 use super::{
   medal::MedalModule, upload::UploadModule, youtube::YoutubeModule, StandardRateLimitGuard,
@@ -51,9 +51,7 @@ pub async fn get_info(auth: TokenAuth) -> Result<Json<ServerInfo>, Status> {
     version: option_env!("CARGO_PKG_VERSION")
       .unwrap_or("unknown")
       .to_string(),
-    repository: option_env!("CARGO_PKG_REPOSITORY")
-      .unwrap_or("https://github.com/oxydien/rist")
-      .to_string(),
+    repository: get_software_repository(),
     issues: "https://github.com/oxydien/rist/issues".to_string(),
     license: option_env!("CARGO_PKG_LICENSE")
       .unwrap_or("MIT")

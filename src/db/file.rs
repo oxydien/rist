@@ -273,8 +273,8 @@ impl FromRow<'_, SqliteRow> for File {
       expires_at: row.get(7),
       access_count: row.get(8),
       state: FileState::from_u8(row.get(9)),
-      upload_method: UploadMethod::from_u8(row.get(9)),
-      file_type: FileType::from_mime_type(&row.try_get::<&str, usize>(10).unwrap_or("")),
+      upload_method: UploadMethod::from_u8(row.get(10)),
+      file_type: FileType::from_mime_type(&row.try_get::<&str, usize>(11).unwrap_or("")),
     })
   }
 }

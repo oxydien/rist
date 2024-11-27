@@ -75,3 +75,20 @@ pub fn format_bytes(bytes: u64) -> String {
   }
   format!("{:.2} {}", num, units[unit])
 }
+
+pub fn get_software_name() -> String {
+  option_env!("CARGO_PKG_NAME")
+    .unwrap_or("RIST")
+    .to_uppercase()
+    .to_string()
+}
+
+pub fn get_software_description() -> String {
+  option_env!("CARGO_PKG_DESCRIPTION")
+    .unwrap_or("A Rust-powered, private, open-source, self-hosted file-sharing solution")
+    .to_string()
+}
+
+pub fn get_software_repository() -> String {
+  option_env!("CARGO_PKG_REPOSITORY").unwrap_or("https://github.com/oxydien/rist").to_string()
+}

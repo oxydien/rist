@@ -77,7 +77,7 @@ pub struct UploadStatus {
 /// As a tuple of (current, max)
 type UploadParts = (u32, u32);
 
-#[derive(Deserialize_repr, Serialize_repr, PartialEq, Clone)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, PartialEq, Clone)]
 #[repr(u8)]
 pub enum UploadMethod {
   #[serde(default)]

@@ -3,6 +3,11 @@ name = "rist"
 version = "0.1.0"
 edition = "2021"
 
+[env]
+CARGO_PKG_REPOSITORY = "https://github.com/oxydien/rist"
+CARGO_PKG_DESCRIPTION = "A Rust-powered, private, open-source, self-hosted file-sharing solution"
+CARGO_PKG_LICENSE = "MIT"
+
 [dependencies]
 rocket = { version = "0.5.1", features = ["json"] }
 rocket-governor = "0.2.0-rc.3"
@@ -13,7 +18,7 @@ tokio = { version = "1.39.2", features = ["full"] }
 
 # TODO: Remove when new SQLX version is released
 # JSONB support if needed
-# https://github.com/launchbadge/sqlx/commit/352b02de6af70f1ff1bfbd15329120589a0f7337
+# https://github.com/launchbadge/sqlx/commit/352b02de6af70f1ff1bfbd15329120589a0f7337 
 sqlx = { git = "https://github.com/launchbadge/sqlx.git", rev = "352b02de6af70f1ff1bfbd15329120589a0f7337", features = [ "runtime-tokio", "sqlite", "macros"] }
 sha2 = "0.10.8"
 hex = "0.4.3"

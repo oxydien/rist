@@ -21,6 +21,7 @@ This project is primarily intended for home-hosted or private file-sharing use c
 
 Ensure that you have the following prerequisites installed:
 - Rust 1.79 or later
+- Nodejs or [Bun](https://bun.sh/)
 - `sqlite3` C library
 - At least 2GB of storage (only for the server image)
 - Internet access (not required if using the server in a local environment and only the file upload feature)
@@ -34,26 +35,24 @@ Hosting RIST server from source is probably the easiest and most customizable op
     git clone https://github.com/oxydien/rist.git
     ```
 
-2. Build the server (this may take a few minutes):
-    ```sh
-    cargo build --release
+2. Run the build script depending on your OS (this may take a few minutes):
+    - Linux/macOS: `./build.sh`
+    - Windows: `./build.bat`
+   
 
-    cp -r ./frontend ./target/release/
-    ```
+And that is it! The built server is located at `./target/release/rist` and you can now run it (in terminal). If you want to run this server in the background, you can try running it in tmux.
 
-3. Run the server:
-    ```sh
-    cd ./target/release/
+Try running it like this (Linux example):
 
-    ./rist
-    ```
-
-And that is it! If you want to run this server in the background, you can try running it in tmux.
+```sh
+cd ./target/release
+./rist
+```
 
 ### Docker
 
-> [!NOTE]
-> The Docker support for this project is still in the testing stage and may not work properly. We recommend [hosting the server normally](#normal-deployment) for a more reliable setup.
+> [!WARNING]
+> Docker deployment is not recommended and not fully functional yet. We recommend [hosting the server normally](#normal-deployment) for a more reliable setup.
 
 #### Start RIST
 

@@ -20,7 +20,7 @@ pub mod info;
 pub mod part;
 pub mod routes;
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub enum DownloadErrorKind {
   NotFound,
   InternalError,
@@ -29,7 +29,7 @@ pub enum DownloadErrorKind {
   Forbidden,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct DownloadError {
   pub status: Status,
   pub kind: DownloadErrorKind,

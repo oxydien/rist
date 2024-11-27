@@ -5,7 +5,7 @@ use crate::{db::file::FileState, file_type::FileType, routes::upload::{part::CHU
 
 use super::{DownloadError, DownloadErrorKind};
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct DownloadFileInfo {
   pub uuid: String,
   pub recommended_method: UploadMethod,
@@ -31,28 +31,28 @@ pub async fn get_file_download_info(uuid: &str) -> Result<DownloadFileInfo, Down
   let output = state.file_db.get_by_uuid(uuid).await;
 
   let info: DownloadFileInfo = match output {
-    Ok(file) => match file {
-      Some(file) => {
-        let method = if file.size > 40.megabytes() {
+    Ok(db_file) => match db_file {
+      Some(db_file) => {
+        let method = if db_file.size > 40.megabytes() {
           UploadMethod::Chunked
         } else {
           UploadMethod::EntireContent
         };
 
-        let parts = if method == UploadMethod::Chunked && file.size > 0 {
-          Some((file.size as u64) / CHUNK_SIZE)
+        let parts = if method == UploadMethod::Chunked && db_file.size > 0 {
+          Some((db_file.size as u64) / CHUNK_SIZE)
         } else {
           None
         };
 
         DownloadFileInfo {
-          uuid: file.uuid,
+          uuid: db_file.uuid,
           recommended_method: method,
-          filename: file.name,
-          file_type: file.file_type.unwrap_or(FileType::Unknown),
-          size: file.size as u64,
+          filename: db_file.name,
+          file_type: db_file.file_type.unwrap_or(FileType::Unknown),
+          size: db_file.size as u64,
           parts,
-          ready: file.state == FileState::Completed,
+          ready: db_file.state == FileState::Completed,
         }
       }
       None => {

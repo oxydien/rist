@@ -3,6 +3,7 @@ use rocket::http::Method;
 use rocket_cors::{AllowedOrigins, CorsOptions};
 use rocket_governor::rocket_governor_catcher;
 use state::State;
+use utils::get_software_name;
 
 #[macro_use]
 extern crate rocket;
@@ -21,7 +22,7 @@ mod tests;
 
 #[launch]
 async fn rocket() -> _ {
-  println!("[INFO  ] Starting {}", env!("CARGO_PKG_NAME"));
+  println!("[INFO  ] Starting {}", get_software_name());
   println!("[INFO  ] Version: {}", env!("CARGO_PKG_VERSION"));
   println!("[INFO  ] TIME check: {}", utils::get_current_timestamp());
 
@@ -79,20 +80,12 @@ async fn rocket() -> _ {
       "/",
       routes![
         routes::index::index,
-        routes::index::index_style,
-        routes::index::global_style,
-        routes::index::poppins_font,
-        routes::index::authorization_page,
-        routes::index::authorization_style,
-        routes::index::dash,
-        routes::index::dash_style,
-        routes::index::dash_upload_file,
-        routes::index::upload_style,
-        routes::index::sha_js,
-        routes::index::youtube_page,
-        routes::index::youtube_style,
-        routes::index::medal_page,
-        routes::index::chunk_upload_page,
+        routes::index::authorize_page,
+        routes::index::file_page,
+        routes::index::dashboard_page,
+        routes::index::dashboard_pages,
+        routes::index::styles,
+        routes::index::assets,
         routes::api::authorize,
         routes::server_info::get_info_route,
         routes::upload::routes::upload_file_whole,
