@@ -56,8 +56,9 @@ main() {
 
     # Copy frontend to backend
     echo "INFO: Copying frontend build to backend"
+    rm -rf ./target/release/frontend
     mkdir -p ./target/release/frontend
-    cp -r ./frontend/dist ./target/release/frontend || error_exit "Failed to copy frontend build"
+    cp -r ./frontend/dist/* ./target/release/frontend || error_exit "Failed to copy frontend build"
 
     echo "BUILD COMPLETE: Frontend and backend successfully built and integrated"
 }

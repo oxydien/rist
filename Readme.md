@@ -42,6 +42,13 @@ Hosting RIST server from source is probably the easiest and most customizable op
 
 And that is it! The built server is located at `./target/release/rist` and you can now run it (in terminal). If you want to run this server in the background, you can try running it in tmux.
 
+> [!NOTE]
+> For linux users, if you want to run the server on port 80 (default website port), you will need to use sudo to run it or add permissions to the file.
+>
+> ```sh
+> sudo setcap cap_net_bind_service=ep ./target/release/rist
+> ```
+
 Try running it like this (Linux example):
 
 ```sh

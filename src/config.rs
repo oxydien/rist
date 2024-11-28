@@ -41,6 +41,7 @@ pub struct YtDlpConfig {
 pub struct ServerConfig {
   pub host: String,
   pub port: u16,
+  pub allow_all_origins: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -90,6 +91,7 @@ impl Config {
       server: ServerConfig {
         host: String::from("0.0.0.0"),
         port: 3003,
+        allow_all_origins: false,
       },
       accounts: AccountsConfig {
         user: vec![UserConfig {
@@ -127,6 +129,10 @@ impl Config {
           if let Some(server_value) = value.as_object() {
             self.server.host = server_value["host"].as_str().unwrap_or("").to_string();
             self.server.port = server_value["port"].as_u64().unwrap_or(0) as u16;
+            self.server.allow_all_origins = server_value
+              .get("allow_all_origins")
+              .map(|v| v.as_bool().unwrap_or(false))
+              .unwrap_or(false);
           }
         }
         "accounts" => {

@@ -35,6 +35,7 @@ async fn rocket() -> _ {
   println!("[DEBUG ] Configuring server...");
   // Setup rocket config
   let figment: rocket::figment::Figment;
+  let allow_cors;
   {
     let state = State::get().await.unwrap();
     figment = rocket::Config::figment()
@@ -46,6 +47,8 @@ async fn rocket() -> _ {
           .limit("data-form", 10.gigabytes())
           .limit("file", 10.gigabytes()),
       ));
+
+    allow_cors = state.config.server.allow_all_origins.clone();
   }
   println!("[DEBUG ] Starting background worker...");
   background_worker::init().unwrap();
@@ -67,7 +70,7 @@ async fn rocket() -> _ {
     )
     .allow_credentials(true);
 
-  rocket::custom(figment)
+  let mut builder = rocket::custom(figment)
     .register(
       "/",
       catchers![
@@ -82,6 +85,7 @@ async fn rocket() -> _ {
         routes::index::index,
         routes::index::authorize_page,
         routes::index::file_page,
+        routes::index::robots_txt,
         routes::index::dashboard_page,
         routes::index::dashboard_pages,
         routes::index::styles,
@@ -99,8 +103,13 @@ async fn rocket() -> _ {
         routes::youtube::youtube_download,
         routes::medal::download_medal_clip,
       ],
-    )
-    .attach(cors.to_cors().unwrap())
+    );
+
+  if allow_cors {
+    builder = builder.attach(cors.to_cors().unwrap());
+  }
+
+  builder
 }
 
 async fn before_launch() {

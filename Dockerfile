@@ -43,5 +43,5 @@ RUN cargo build --release
 FROM rust:1.79
 WORKDIR /app
 COPY --from=backend-build /rist/target/release/rist .
-COPY --from=frontend-build /app/frontend/dist ./frontend
+COPY --from=frontend-build /app/frontend/dist/* ./frontend
 CMD ["./rist"]

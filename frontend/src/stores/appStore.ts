@@ -8,7 +8,7 @@ export const useAppStore = create<AppStore>((set) => ({
 	role: -1,
 	modules: [],
 	serverInfo: null,
-	asideOpen: false,
+	asideOpen: window.innerWidth > 756,
 	moduleData: new Map<string, unknown>(),
 	toggleAside: () => set((state) => ({ asideOpen: !state.asideOpen })),
 	updateToken: (token: string) => {

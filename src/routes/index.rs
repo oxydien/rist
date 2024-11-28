@@ -281,6 +281,13 @@ pub async fn file_page<'r, 'o: 'r>(
     .map(FilePageResponse::Html)
 }
 
+#[get("/robots.txt")]
+pub async fn robots_txt<'r>(
+  _brl: RocketGovernor<'r, RelaxedRateLimitGuard>,
+) -> Result<String, Status> {
+  Ok("User-agent: *\nDisallow: /".to_string())
+}
+
 #[get("/dash")]
 pub async fn dashboard_page<'r>(
   _brl: RocketGovernor<'r, RelaxedRateLimitGuard>,
@@ -361,15 +368,21 @@ pub async fn assets<'r>(
   auth: Result<TokenAuth, AuthError>,
   file: PathBuf,
 ) -> Option<NamedFile> {
+  let file_str = file.to_str().unwrap();
+
+  if file_str.ends_with(".map") {
+    return None;
+  }
+
   if PRIVATE_ASSETS
     .iter()
-    .any(|asset| file.to_str().unwrap().starts_with(asset))
+    .any(|asset| file_str.starts_with(asset))
   {
     if auth.is_err() {
       return None;
     }
   }
-  NamedFile::open(format!("frontend/assets/{}", file.to_str().unwrap()))
+  NamedFile::open(format!("frontend/assets/{}", file_str))
     .await
     .ok()
 }

@@ -61,8 +61,9 @@ if %ERRORLEVEL% neq 0 (
 )
 
 :: Copy frontend to backend
+rmdir /S /Q "target\release\frontend"
 mkdir "target\release\frontend" 2>nul
-xcopy /E /I /Y "frontend\dist" "target\release\frontend"
+xcopy /E /I /Y "frontend\dist\*" "target\release\frontend"
 if %ERRORLEVEL% neq 0 (
     echo ERROR: Failed to copy frontend build
     exit /b 1
