@@ -18,16 +18,18 @@ main {
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
+	gap: var(--gap-sm);
 	min-height: 100%;
 	min-height: 100svh;
 	max-width: 550px;
 	padding-inline: 30px;
 	margin-inline: auto;
+	opacity: 1 !important;
 }
 
 h1 {
 	color: hsl(var(--brand-color));
-	font-size: clamp(1.8rem, 6vw, 4.5rem);
+	font-size: clamp(2.1rem, 7vw, 5.2rem);
 	font-weight: 700;
 	text-align: center;
 }
@@ -50,11 +52,22 @@ nav {
 }
 
 nav input {
-	width: calc(75% - var(--gap-md));
+	width: calc(70% - var(--gap-md));
+	padding: var(--gap-md) !important;
 }
 
 nav button {
-	width: 25%;
+	width: 30%;
+	padding: var(--gap-md) var(--gap-lg) !important;
+}
+
+nav a {
+	padding: var(--gap-md) var(--gap-lg) !important;
+}
+
+nav a:focus-visible {
+	transition: outline 400ms ease-in-out;
+	outline: 4px solid hsl(var(--brand-color)) !important;
 }
 
 .error {
@@ -100,11 +113,11 @@ nav button {
 	height: 130px;
 	border-radius: 50%;
 	background: conic-gradient(
-    hsl(var(--green-color)) 0%,
-    hsl(var(--green-color)) var(--_progress),
-    hsl(var(--surface-0-color)) var(--_progress),
-    hsl(var(--surface-0-color))
-  );
+		hsl(var(--green-color)) 0%,
+		hsl(var(--green-color)) var(--_progress),
+		hsl(var(--surface-0-color)) var(--_progress),
+		hsl(var(--surface-0-color))
+	);
 	isolation: isolate;
 }
 
@@ -129,6 +142,37 @@ nav button {
 	text-align: center;
 	width: 100%;
 	overflow-wrap: break-word;
+}
+
+details {
+	width: 100%;
+	background-color: hsl(var(--surface-0-color) / 0.5);
+	border-radius: var(--radius-md);
+	padding: var(--gap-md);
+}
+
+details summary {
+	cursor: pointer;
+}
+
+details button strong {
+	display: block;
+	margin-inline: auto;
+}
+
+details .download-url-editor {
+	display: flex;
+	flex-flow: column nowrap;
+	gap: var(--gap-md);
+}
+
+details span,
+details summary {
+	font-size: var(--font-md);
+}
+
+details span {
+	margin-bottom: calc(var(--gap-md) * -1);
 }
 
 @media screen and (max-width: 600px) {

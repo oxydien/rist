@@ -2,12 +2,12 @@ use std::{path::Path, time::Duration};
 
 use tokio::time::interval;
 
-use crate::{state, utils};
+use crate::{log_d, log_e, state, utils};
 
 pub fn init() -> Result<(), Box<dyn std::error::Error>> {
   tokio::spawn(async move {
     if let Err(e) = worker().await {
-      eprintln!("(BW) Background worker fatal error: {}", e);
+      log_e!("(BW) Background worker error: {}", e);
     }
   });
   Ok(())
@@ -18,10 +18,10 @@ async fn worker() -> Result<(), Box<dyn std::error::Error>> {
 
   loop {
     interval.tick().await;
-    println!("[DEBUG ] (BW) Background worker running...");
+    log_d!("Running background worker iteration...");
 
     if let Err(e) = run_cleanup_iteration().await {
-      eprintln!("(BW) Background worker error: {}", e);
+      log_e!("(BW) Error running cleanup iteration, ignoring: {}", e);
       // continue
     }
   }
@@ -45,10 +45,10 @@ async fn remove_expired_files(state: &state::State) -> Result<(), Box<dyn std::e
   let rows = state.file_db.get_expired_files().await?;
 
   for row in rows {
-    println!("[INFO  ] (BW) Removing expired file: {}", row.uuid);
+    log_d!("(BW) Removing expired file: {}", row.uuid);
 
     if let Err(e) = state.file_db.remove_by_uuid(&row.uuid).await {
-      eprintln!("(BW) Error removing expired file {}: {}", row.uuid, e);
+      log_e!("(BW) Error removing expired file {}: {}", row.uuid, e);
     }
   }
 
@@ -59,10 +59,10 @@ async fn remove_expired_videos(state: &state::State) -> Result<(), Box<dyn std::
   let rows = state.video_db.get_expired_videos().await?;
 
   for row in rows {
-    println!("[INFO  ] (BW) Removing expired video: {}", row.uuid);
+    log_d!("(BW) Removing expired video: {}", row.uuid);
 
     if let Err(e) = state.video_db.remove_by_uuid(&row.uuid).await {
-      eprintln!("(BW) Error removing expired video {}: {}", row.uuid, e);
+      log_e!("(BW) Error removing expired video {}: {}", row.uuid, e);
     }
   }
 
@@ -129,10 +129,10 @@ fn remove_files_not_in_database(
 
     // Remove file if not in valid paths
     if !valid_paths.contains(&entry_path) {
-      println!("[INFO  ] (BW) Removing file: {}", &entry_path);
+      log_d!("(BW) Removing orphaned file: {}", entry_path);
 
       if let Err(e) = std::fs::remove_file(&path) {
-        eprintln!("(BW) Error removing file {}: {}", entry_path, e);
+        log_e!("(BW) Error removing orphaned file {}: {}", entry_path, e);
       }
     }
   }
@@ -163,11 +163,12 @@ async fn cleanup_temp_folders(state: &state::State) -> Result<(), Box<dyn std::e
       if let Ok(metadata) = tokio::fs::metadata(entry_path).await {
         if let Ok(modified) = metadata.modified() {
           if let Ok(elapsed) = modified.elapsed() {
-            if elapsed.as_secs() > 86400 {
-              println!("[INFO  ] (BW) Removing temp directory: {}", entry_path);
+            let time_limit: u64 = 86400; // 24 hours
+            if elapsed.as_secs() > time_limit {
+              log_d!("(BW) Removing temp directory: {}", entry_path);
 
               if let Err(e) = tokio::fs::remove_dir_all(entry_path).await {
-                eprintln!("(BW) Error removing temp directory {}: {}", entry_path, e);
+                log_e!("(BW) Error removing temp directory {}: {}", entry_path, e);
               }
             }
           }

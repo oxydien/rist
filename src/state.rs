@@ -1,13 +1,11 @@
 use std::{collections::HashMap, sync::Arc};
 
 use crate::{
-  config::Config,
-  db::{
+  config::Config, db::{
     file::{FileDB, FileState},
     user::UserDB,
     video::VideoDB,
-  },
-  routes::upload::{UploadStatus, UploadStatusMap},
+  }, err_none, log_e, log_i, routes::upload::{UploadStatus, UploadStatusMap}
 };
 use tokio::sync::{OnceCell, RwLock};
 
@@ -27,7 +25,7 @@ impl State {
       .get_or_try_init(Self::initialize_state)
       .await
       .map_err(|e| {
-        eprintln!("[ERROR ] Failed to initialize state: {}", e);
+        log_e!("Failed to initialize state: {}", e);
         e
       })?;
 
@@ -39,9 +37,8 @@ impl State {
       while !APP_STATE.initialized() {}
     }
 
-    Ok(Arc::clone(
-      APP_STATE.get().expect("[EXPECT] State is not initialized!"),
-    ))
+    let state = err_none!(APP_STATE.get(), "Failed to get state");
+    Ok(Arc::clone(&state))
   }
 
   pub fn initialized() -> bool {
@@ -49,7 +46,7 @@ impl State {
   }
 
   async fn initialize_state() -> Result<Arc<Self>, Box<dyn std::error::Error>> {
-    println!("[INFO  ] Initializing State");
+    log_i!("Initializing State");
 
     let config_path = std::env::var("CONFIG_PATH").unwrap_or("./config.json".to_string());
     let config = Config::load(&config_path)?;

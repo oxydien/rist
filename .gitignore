@@ -6,3 +6,4 @@ config.json
 /frontend/dist
 /garbage
 .venv/
+log.txt

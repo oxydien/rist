@@ -128,9 +128,10 @@ export async function ChunkedDownload(
 	number_of_parts: number,
 	onProgress?: (progress: DownloadProgress) => void,
 	signal?: AbortSignal,
+	maxRetries = 3
 ): Promise<Blob> {
 	const parts = new Map<number, Blob>();
-	const queue = new RequestQueue(5, relaxedRateLimitGuard, 3);
+	const queue = new RequestQueue(5, relaxedRateLimitGuard, maxRetries);
 	const progressMap = new Map<number, number>();
 	let downloadError: Error | null = null;
 

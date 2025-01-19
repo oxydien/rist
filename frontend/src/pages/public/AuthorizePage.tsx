@@ -1,7 +1,8 @@
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import Button from "../../components/common/Button";
 import Input from "../../components/common/Input";
 import { authorize } from "../../utils/comm/auth";
+import type { Component } from "preact";
 
 export default function AuthorizePage() {
 	import("../../assets/styles/public/index.css");
@@ -10,6 +11,9 @@ export default function AuthorizePage() {
 	const [error, setError] = useState("");
 	const [warn, setWarn] = useState("");
 	const [redirect, setRedirect] = useState("/dash/");
+
+	const [focused, setFocused] = useState(false);
+	const inputRef = useRef<Component>(null);
 
 	useEffect(() => {
 		const url = new URL(window.location.href);
@@ -22,7 +26,17 @@ export default function AuthorizePage() {
 		if (redirectUrl) {
 			setRedirect(redirectUrl);
 		}
-	}, []);
+
+		const tryFocus = () => {
+			if (inputRef.current && !focused && inputRef.current.base) {
+				(inputRef.current.base as HTMLInputElement).focus();
+				setFocused(true);
+				return;
+			}
+			requestAnimationFrame(tryFocus);
+		};
+		tryFocus();
+	}, [focused]);
 
 	const handleFormSubmit = async (event?: MouseEvent) => {
 		event?.preventDefault();
@@ -58,6 +72,7 @@ export default function AuthorizePage() {
 					value={tokenVal}
 					onChange={(e) => setTokenVal((e.target as HTMLInputElement).value)}
 					placeholder="Access token"
+					ref={inputRef}
 					onKeyUp={(e) => {
 						if (e?.key === "Enter") {
 							handleFormSubmit();

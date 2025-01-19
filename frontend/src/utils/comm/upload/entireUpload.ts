@@ -14,6 +14,7 @@ export async function UploadEntireBuffer(buffer: ArrayBuffer, uuid: string) {
     throw new Error("Token not found");
   }
 
+  console.debug("Uploading buffer", buffer, url);
   try {
     const response = await fetch(url, {
       method: "POST",

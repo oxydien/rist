@@ -5,6 +5,10 @@ import { DownloadEntireFile } from "../../utils/comm/download/entireDownload";
 import { ChunkedDownload } from "../../utils/comm/download/chunkedDownload";
 import type DownloadProgress from "../../types/DownloadProgress";
 import type { DownloadFileInfo } from "../../types/DownloadFileInfo";
+import { formatBytes } from "../../utils/math/bytes";
+import Button from "../../components/common/Button";
+import Input from "../../components/common/Input";
+import ChipsSelect from "../../components/common/ChipsSelect";
 
 export default function DownloadPage() {
 	const [error, setError] = useState("");
@@ -16,6 +20,12 @@ export default function DownloadPage() {
 	const [downloadMethod, setDownloadMethod] = useState(UploadMethod.CHUNKED);
 	const [hasAttemptedDownload, setHasAttemptedDownload] = useState(false);
 	const [blobUrl, setBlobUrl] = useState("");
+	const [maxRetries, setMaxRetries] = useState(3);
+
+	const [urlEditorValue, setUrlEditorValue] = useState("");
+	const [urlEditorMethod, setUrlEditorMethod] = useState("chunked");
+	const [urlEditorRetries, setUrlEditorRetries] = useState(maxRetries);
+
 	const fileSizeRef = useRef<number | null>(null);
 
 	import("../../assets/styles/public/index.css");
@@ -25,11 +35,21 @@ export default function DownloadPage() {
 		setProgress((progress.loaded / fileSizeRef.current) * 100);
 	}, []);
 
+	// Effect to handle the URL editor
+	useEffect(() => {
+		const url = new URL(window.location.href);
+		url.searchParams.set("u", uuid);
+		url.searchParams.set("method", urlEditorMethod.toString());
+		url.searchParams.set("retry", urlEditorRetries.toString());
+		setUrlEditorValue(url.toString());
+	}, [uuid, urlEditorMethod, urlEditorRetries]);
+
 	// Effect to initialize UUID from URL - runs once
 	useEffect(() => {
 		const url = new URL(window.location.href);
 		const urlUuid =
 			url.searchParams.get("u") || url.searchParams.get("uuid") || "";
+		setMaxRetries(Number.parseInt(url.searchParams.get("retry") || "3", 10));
 
 		if (!urlUuid) {
 			setStatus("Error");
@@ -88,7 +108,13 @@ export default function DownloadPage() {
 					fileInfo.parts
 				) {
 					setVerbose(`Downloading chunked file: \n${uuid}`);
-					downloadPromise = ChunkedDownload(uuid, fileInfo.parts, onProgress);
+					downloadPromise = ChunkedDownload(
+						uuid,
+						fileInfo.parts,
+						onProgress,
+						abortController.signal,
+						maxRetries,
+					);
 				} else {
 					throw new Error(
 						`Unsupported download method or no parts found; cannot download file. {method: ${localDownloadMethod}, parts: ${fileInfo.parts}}`,
@@ -132,6 +158,10 @@ export default function DownloadPage() {
 		};
 	}, [uuid, onProgress]);
 
+	const handleEditorTryAgain = () => {
+		location.href = urlEditorValue;
+	};
+
 	return (
 		<main>
 			<h1>{status}</h1>
@@ -143,8 +173,16 @@ export default function DownloadPage() {
 			)}
 			<p className="verbose">{verbose}</p>
 			{error && <p className="error">{String(error)}</p>}
+			{info && (
+				<div className="file-info">
+					<p>
+						File: <em>{info.filename}</em>
+					</p>
+					<p>Size: {formatBytes(info.size)}</p>
+				</div>
+			)}
 			<div className="download-progress" style={`--_progress: ${progress}%`}>
-				<span>{Math.round(progress)}%</span>
+				<span>{Math.round(progress || 0)}%</span>
 			</div>
 			{blobUrl !== "" && (
 				<p className="download-link">
@@ -153,6 +191,48 @@ export default function DownloadPage() {
 						download file
 					</a>
 				</p>
+			)}
+			{status === "Error" && uuid && (
+				<details>
+					<summary>Try different download methods</summary>
+					<div className="download-url-editor">
+						<nav className="editor-output">
+							<Input
+								value={urlEditorValue}
+								onChange={(e) => {
+									e.preventDefault();
+									if ((e.target as HTMLInputElement | null)?.value) {
+										(e.target as HTMLInputElement).value = urlEditorValue;
+									}
+								}}
+							/>
+							<Button variant="primary" onClick={handleEditorTryAgain}><strong>Try it</strong></Button>
+						</nav>
+						<span htmlFor="method">Method:</span>{" "}
+						<ChipsSelect
+							options={[
+								{ label: "Chunked", value: "chunked" },
+								{ label: "Entire", value: "entire" },
+							]}
+							value={urlEditorMethod}
+							onChange={(e) => {
+								setUrlEditorMethod(e[0]);
+							}}
+						/>
+						<span htmlFor="retries">Retries:</span>{" "}
+						<ChipsSelect
+							options={[
+								{ label: "3 (default)", value: 3 },
+								{ label: "10", value: 10 },
+								{ label: "50", value: 50 },
+							]}
+							value={urlEditorRetries}
+							onChange={(e) => {
+								setUrlEditorRetries(e[0]);
+							}}
+						/>
+					</div>
+				</details>
 			)}
 		</main>
 	);

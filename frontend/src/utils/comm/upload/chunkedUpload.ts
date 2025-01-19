@@ -98,6 +98,7 @@ export default async function chunkedUpload(
 
 		queue.add(uploadChunk);
 	}
+	console.debug("Starting upload queue");
 
 	try {
 		const responses: UploadResponse[] = [];
@@ -107,6 +108,7 @@ export default async function chunkedUpload(
 			responses.push(responseJson);
 		});
 
+		console.debug("Waiting for upload queue to finish");
 		await queue.awaitZeroRequests();
 
 		// Get the final response from the last chunk

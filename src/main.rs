@@ -12,6 +12,7 @@ pub mod background_worker;
 pub mod config;
 pub mod db;
 pub mod file_type;
+pub mod log;
 pub mod module;
 pub mod routes;
 pub mod state;
@@ -22,17 +23,18 @@ mod tests;
 
 #[launch]
 async fn rocket() -> _ {
-  println!("[INFO  ] Starting {}", get_software_name());
-  println!("[INFO  ] Version: {}", env!("CARGO_PKG_VERSION"));
-  println!("[INFO  ] TIME check: {}", utils::get_current_timestamp());
+  // Startup
+  log_i!("Starting {}", get_software_name());
+  log_i!("Version: {}", env!("CARGO_PKG_VERSION"));
+  log_i!("Time: {}", utils::get_current_timestamp());
 
   // Setup main state
   let _ = state::State::init().await.map_err(|e| {
-    eprintln!("[FATAL ] Failed to initialize main state: {}", e);
+    log_e!("Failed to initialize main state: {}", e);
     panic!("Failed to initialize main state");
   });
 
-  println!("[DEBUG ] Configuring server...");
+  log_d!("Configuring server...");
   // Setup rocket config
   let figment: rocket::figment::Figment;
   let allow_cors;
@@ -50,14 +52,14 @@ async fn rocket() -> _ {
 
     allow_cors = state.config.server.allow_all_origins.clone();
   }
-  println!("[DEBUG ] Starting background worker...");
+  log_d!("Starting background worker...");
   background_worker::init().unwrap();
 
-  println!("[DEBUG ] Running before_launch...");
+  log_d!("Running before_launch...");
   before_launch().await;
 
   // Launch rocket server
-  println!("[DEBUG ] Launching server...");
+  log_d!("Launching server...");
 
   // Cors (used for ui dev)
   let cors = CorsOptions::default()
@@ -109,6 +111,7 @@ async fn rocket() -> _ {
     builder = builder.attach(cors.to_cors().unwrap());
   }
 
+  log_d!("Awaiting rocket...");
   builder
 }
 
