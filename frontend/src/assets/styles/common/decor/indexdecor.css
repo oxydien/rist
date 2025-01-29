@@ -1,0 +1,69 @@
+.index-decorations {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	isolation: isolate;
+	z-index: -1;
+	pointer-events: none;
+}
+
+.index-decorations-background {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: radial-gradient(
+		farthest-corner at center,
+    hsl(var(--crust-color) / 0.01),
+    hsl(var(--crust-color))
+	);
+	z-index: 5;
+}
+
+.index-decorations-left {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 80vw;
+	height: 80vw;
+	background-color: hsl(var(--brand-color) / 0.1);
+  animation: forwards animatedBackgroundColor 5s 2s linear infinite;
+	border-radius: 50%;
+	transform: translate(-50%, -50%) rotate(-45deg);
+	filter: blur(calc(var(--screen-width) / 16));
+	z-index: 3;
+}
+
+.index-decorations-right {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	width: 80vw;
+	height: 80vw;
+	background-color: hsl(var(--brand-color) / 0.1);
+  animation: forwards animatedBackgroundColor 5s linear infinite;
+	border-radius: 50%;
+	transform: translate(50%, 50%) rotate(45deg);
+	filter: blur(calc(var(--screen-width) / 16));
+	z-index: 3;
+}
+
+@keyframes animatedBackgroundColor {
+  0%, 100% {
+    background-color: hsl(var(--brand-color) / 0.1);
+  }
+  50% {
+    background-color: hsl(var(--brand-color) / 0.7);
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .index-decorations-left,
+  .index-decorations-right {
+    display: none;
+  }
+}

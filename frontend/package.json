@@ -1,0 +1,23 @@
+{
+  "name": "rist-frontend",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@types/node": "^22.9.0",
+    "preact": "^10.24.3",
+    "preact-iso": "^2.8.1",
+    "vite-plugin-static-copy": "^2.2.0",
+    "zustand": "^5.0.1"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.9.1",
+    "typescript": "~5.6.2",
+    "vite": "^5.4.10"
+  }
+}

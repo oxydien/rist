@@ -1,0 +1,11 @@
+.chips-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+}
+
+.chips-select .btn-primary {
+  background-color: hsl(var(--surface-1-color));
+  outline: 2px solid hsl(var(--brand-color));
+  color: hsl(var(--text-color));
+}

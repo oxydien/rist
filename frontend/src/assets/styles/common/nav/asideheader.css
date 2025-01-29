@@ -1,0 +1,53 @@
+.aside-header {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  overflow: hidden;
+}
+
+.aside-header-dash {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  text-decoration: none;
+  color: inherit;
+}
+
+.aside-header-icon {
+  display: grid;
+  place-items: center;
+  height: 42px;
+  width: 42px;
+  min-width: 42px;
+  background-color: hsl(var(--brand-color));
+  color: hsl(var(--crust-color));
+  border-radius: var(--radius-md);
+  padding: var(--gap-sm);
+  font-size: var(--font-lg);
+  font-weight: 600;
+  transition: margin-left var(--_nav-transition);
+}
+
+.aside:not(.aside-open) .aside-header-icon {
+  margin-left: var(--gap-sm);
+}
+
+.aside-header h2 {
+  flex-grow: 1;
+  white-space: nowrap;
+  transition: opacity var(--_nav-transition);
+}
+
+.aside:not(.aside-open) h2 {
+  opacity: 0;
+}
+
+.aside-header .btn {
+  background-color: transparent;
+}
+
+.aside-header .btn > svg {
+  height: 24px;
+  width: 24px;
+}

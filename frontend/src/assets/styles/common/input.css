@@ -1,0 +1,50 @@
+.input {
+  --_background-color: hsl(var(--surface-1-color));
+  --_text-color: hsl(var(--subtext-0-color));
+  --_hover-background-color: hsl(var(--surface-0-color));
+  --_hover-text-color: hsl(var(--text-color));
+  --_focus-outline-color: hsl(var(--surface-1-color));
+  --_focus-text-color: hsl(var(--subtext-0-color));
+
+  background-color: var(--_background-color);
+  color: var(--_text-color);
+  border-radius: var(--radius-md);
+  padding: var(--gap-sm) var(--gap-md);
+  border: none;
+  cursor: text;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, outline 0.2s ease-in-out;
+  font-size: var(--font-md);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.input:hover, .input:focus-visible {
+  background-color: var(--_hover-background-color);
+  color: var(--_hover-text-color);
+}
+
+.input:focus {
+  outline: 2px solid var(--_focus-outline-color);
+  color: var(--_focus-text-color);
+}
+
+.input:disabled {
+  filter: brightness(0.8);
+  cursor: not-allowed;
+}
+
+.input.input-primary {
+  --_hover-background-color: hsl(var(--surface-1-color));
+  --_hover-text-color: hsl(var(--brand-color));
+  --_focus-outline-color: hsl(var(--brand-color));
+  --_focus-text-color: hsl(var(--brand-color));
+}
+
+.input.input-destructive {
+  --_background-color: hsl(var(--maroon-color));
+  --_text-color: hsl(var(--crust-color));
+  --_hover-background-color: hsl(var(--surface-1-color));
+  --_hover-text-color: hsl(var(--maroon-color));
+  --_focus-outline-color: hsl(var(--surface-1-color));
+  --_focus-text-color: hsl(var(--maroon-color));
+}

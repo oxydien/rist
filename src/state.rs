@@ -1,36 +1,44 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::{config::Config, db::{file::FileDB, user::UserDB, video::VideoDB}, routes::upload::UploadStatusMap};
+use crate::{
+  config::Config, db::{
+    file::{FileDB, FileState},
+    user::UserDB,
+    video::VideoDB,
+  }, err_none, log_e, log_i, routes::upload::{UploadStatus, UploadStatusMap}
+};
 use tokio::sync::{OnceCell, RwLock};
 
 static APP_STATE: OnceCell<Arc<State>> = OnceCell::const_new();
 pub struct State {
-   pub file_db: FileDB,
-   pub user_db: UserDB,
-   pub video_db: VideoDB,
-   pub config: Config,
-   pub config_path: String,
-   pub upload_status: UploadStatusMap,
+  pub file_db: FileDB,
+  pub user_db: UserDB,
+  pub video_db: VideoDB,
+  pub config: Config,
+  pub config_path: String,
+  pub upload_status: UploadStatusMap,
 }
 
 impl State {
-
   pub async fn init() -> Result<(), Box<dyn std::error::Error>> {
     APP_STATE
-        .get_or_try_init(Self::initialize_state)
-        .await.map_err(|e| {eprintln!("[ERROR ] Failed to initialize state: {}", e); e})?;
+      .get_or_try_init(Self::initialize_state)
+      .await
+      .map_err(|e| {
+        log_e!("Failed to initialize state: {}", e);
+        e
+      })?;
 
     Ok(())
   }
 
   pub async fn get() -> Result<Arc<Self>, Box<dyn std::error::Error>> {
     if !APP_STATE.initialized() {
-        while !APP_STATE.initialized() {}
+      while !APP_STATE.initialized() {}
     }
 
-    Ok(Arc::clone(
-      APP_STATE.get().expect("[EXPECT] State is not initialized!"),
-    ))
+    let state = err_none!(APP_STATE.get(), "Failed to get state");
+    Ok(Arc::clone(&state))
   }
 
   pub fn initialized() -> bool {
@@ -38,8 +46,8 @@ impl State {
   }
 
   async fn initialize_state() -> Result<Arc<Self>, Box<dyn std::error::Error>> {
-    println!("[INFO  ] Initializing State");
-  
+    log_i!("Initializing State");
+
     let config_path = std::env::var("CONFIG_PATH").unwrap_or("./config.json".to_string());
     let config = Config::load(&config_path)?;
     let file_db = FileDB::init(&config.database.file_db_path).await?;
@@ -58,6 +66,21 @@ impl State {
   }
 
   // Utils
+
+  /// Changes or creates the upload status for the given uuid and file state if present
+  pub async fn change_upload_status(
+    &self,
+    uuid: &str,
+    status: UploadStatus,
+    file_state: Option<FileState>,
+  ) {
+    let mut upload_state = self.upload_status.write().await;
+    upload_state.insert(uuid.to_string(), status);
+
+    if let Some(file_state) = file_state {
+      let _ = self.file_db.update_state(uuid, file_state).await;
+    }
+  }
 
   pub async fn remove_upload_status(&self, uuid: &str) {
     let mut upload_state = self.upload_status.write().await;

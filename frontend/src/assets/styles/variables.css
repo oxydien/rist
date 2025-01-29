@@ -1,0 +1,45 @@
+:root {
+  /* Colors (credits anthropic for idea) */
+  /* Theme inspired by Catppuccin Mocha */
+  --crust-color: 248 16% 10%;
+  --mantle-color: 255 14% 11%;
+  --base-color: 248 21% 15%;
+  --text-color: 252 64% 88%;
+  --subtext-0-color: 252 35% 80%;
+  --subtext-1-color: 268 24% 72%;
+  --surface-0-color: 249 16% 23%;
+  --surface-1-color: 251 13% 31%;
+
+  --mauve-color: 258 71% 78%;
+  --lavender-color: 232 97% 85%;
+  --teal-color: 175 63% 73%;
+  --green-color: 120 62% 76%;
+  --yellow-color: 45 91% 83%;
+  --peach-color: 23 86% 72%;
+  --maroon-color: 355 63% 70%;
+
+  --brand-color: var(--mauve-color);
+
+  /* Spacing */
+  --gap-sm: 5px;
+  --gap-md: 12px;
+  --gap-lg: 32px;
+
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+
+  /* Fonts */
+  --font-family: Poppins, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  --font-sm: 1rem;
+  --font-md: 1.2rem;
+  --font-lg: 1.6rem;
+  --font-weight: 400;
+}

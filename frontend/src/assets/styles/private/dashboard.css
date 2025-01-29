@@ -1,0 +1,14 @@
+section.modules {
+  margin-top: var(--gap-md);
+}
+
+section.modules .grid {
+  display: grid;
+  gap: var(--gap-md);
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  margin-top: var(--gap-sm);
+  padding: var(--gap-md);
+  background-color: hsl(var(--base-color));
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
