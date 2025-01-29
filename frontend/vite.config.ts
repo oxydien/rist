@@ -8,8 +8,7 @@ export default defineConfig({
 	plugins: [preact(),
 		viteStaticCopy({
       targets: [
-        { src: '401.html', dest: '.' },
-        { src: '404.html', dest: '.' }
+
       ]
     })
 	],

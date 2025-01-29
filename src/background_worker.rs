@@ -15,15 +15,19 @@ pub fn init() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn worker() -> Result<(), Box<dyn std::error::Error>> {
   let mut interval = interval(Duration::from_secs(600));
+  log_d!("(BW) Worker started, consuming first tick");
+  interval.tick().await;
 
   loop {
+    log_d!("(BW) Waiting for next tick...");
     interval.tick().await;
-    log_d!("Running background worker iteration...");
+    log_d!("(BW) Tick received, running iteration");
 
     if let Err(e) = run_cleanup_iteration().await {
       log_e!("(BW) Error running cleanup iteration, ignoring: {}", e);
       // continue
     }
+    log_d!("(BW) Iteration completed");
   }
 }
 
@@ -148,28 +152,29 @@ async fn cleanup_temp_folders(state: &state::State) -> Result<(), Box<dyn std::e
   if !upload_path.exists() {
     return Ok(());
   }
+
   let temp_dir = upload_path.join("temp");
+  if !temp_dir.exists() {
+    return Ok(());
+  }
 
   // Check for inner files or directories
   let mut entries = tokio::fs::read_dir(&temp_dir).await?;
 
   // If entry has been there for 24 hours, remove it
-  while let Ok(entry) = entries.next_entry().await {
-    if let Some(file_entry) = entry {
-      let path = file_entry.path();
+  while let Some(entry) = entries.next_entry().await? {
+    let path = entry.path();
+    let entry_path = path.to_str().unwrap_or("");
 
-      let entry_path = path.to_str().unwrap_or("");
+    if let Ok(metadata) = tokio::fs::metadata(entry_path).await {
+      if let Ok(modified) = metadata.modified() {
+        if let Ok(elapsed) = modified.elapsed() {
+          let time_limit: u64 = 86400; // 24 hours
+          if elapsed.as_secs() > time_limit {
+            log_d!("(BW) Removing temp directory: {}", entry_path);
 
-      if let Ok(metadata) = tokio::fs::metadata(entry_path).await {
-        if let Ok(modified) = metadata.modified() {
-          if let Ok(elapsed) = modified.elapsed() {
-            let time_limit: u64 = 86400; // 24 hours
-            if elapsed.as_secs() > time_limit {
-              log_d!("(BW) Removing temp directory: {}", entry_path);
-
-              if let Err(e) = tokio::fs::remove_dir_all(entry_path).await {
-                log_e!("(BW) Error removing temp directory {}: {}", entry_path, e);
-              }
+            if let Err(e) = tokio::fs::remove_dir_all(entry_path).await {
+              log_e!("(BW) Error removing temp directory {}: {}", entry_path, e);
             }
           }
         }

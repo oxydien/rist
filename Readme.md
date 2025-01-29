@@ -10,8 +10,11 @@ RIST is a Rust-powered, private, open-source, self-hosted file-sharing solution.
 - **Reliable**: The server is designed to be stable and resilient, returning errors when issues occur instead of crashing.
 - **Secure Access**: You can set up authorized users, ensuring that only approved individuals can access the server.
 - **Self-hosting Friendly**: RIST can be easily hosted on any Linux server (see [Self-hosting](#self-hosting) for more details).
-- **YouTube Support**: The server can download videos from YouTube using the yt-dlp library.
+- **YouTube Support**: The server can download videos from YouTube using the `yt-dlp` library.
 
+## Showcase
+
+You can see some screenshots at [.github/assets](./.github/assets)
 
 ## Self hosting
 
