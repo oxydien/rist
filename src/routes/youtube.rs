@@ -436,6 +436,7 @@ pub async fn youtube_download<'r>(
       metadata.len(),
       utils::get_current_timestamp() + 65_321,
       UploadMethod::Url,
+      None,
       true,
     )
     .await

@@ -4,6 +4,8 @@ config.json
 /db
 /frontend/node_modules
 /frontend/dist
+.idea
 /garbage
-.venv/
+.venv
 log.txt
+.cargo

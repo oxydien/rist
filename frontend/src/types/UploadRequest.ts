@@ -6,4 +6,5 @@ export default interface UploadRequest {
   file_name: string;
   file_hash: string;
   expires_at: number;
+  shorten: boolean;
 }

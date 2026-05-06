@@ -159,14 +159,15 @@ pub async fn upload_entire_content(
     Err(_) => return Err(UploadError::state_error()),
   };
 
-  let file_type = FileTypeDetector::guess(first_chunk_buffer.as_slice());
+  let file_type = FileTypeDetector::guess(first_chunk_buffer.as_slice()).ok();
+
 
   // Update the database
   db_file.state = FileState::Completed;
   db_file.path = file_path.to_string_lossy().to_string();
   db_file.hash = hash_str.clone();
   db_file.size = file_size as i64;
-  db_file.file_type = file_type.map(|f| Some(f)).unwrap_or(None);
+  db_file.file_type = file_type.clone();
 
   state
     .file_db
@@ -180,8 +181,7 @@ pub async fn upload_entire_content(
         status: Status::InternalServerError,
         message: Some("Failed to update file in DB".to_string()),
       }
-    })
-    .unwrap();
+    })?;
 
   // Remove from upload status
   if state
@@ -201,5 +201,6 @@ pub async fn upload_entire_content(
     uuid: uuid_raw,
     hash: hash_str,
     size: file_size as i64,
+    content_type: file_type.map(|f| f.to_mime_type())
   }))
 }

@@ -4,7 +4,7 @@ use rocket::{http::Status, serde::json::Json};
 use uuid::Uuid;
 
 use crate::{db::file::FileState, state::State};
-
+use crate::routes::upload::request::url_shortener::shortened_id;
 use super::{
   error::{UploadError, UploadErrorKind},
   UploadMethod, UploadRequest, UploadRequestResponse, UploadStatus,
@@ -35,6 +35,8 @@ pub async fn upload_request(
     None
   };
 
+  let shortened = if data.0.shorten { shortened_id() } else { None };
+
   // Add the upload file to the database
   let upload_id = Uuid::new_v4().to_string();
   state
@@ -45,6 +47,7 @@ pub async fn upload_request(
       data.0.file_size,
       data.0.expires_at,
       data.0.upload_method.clone(),
+      shortened.clone(),
     )
     .await
     .map_err(|e| {
@@ -81,6 +84,7 @@ pub async fn upload_request(
     upload_id,
     upload_method: data.0.upload_method,
     upload_parts: parts,
+    shortened_url: shortened,
   }))
 }
 
@@ -111,6 +115,7 @@ async fn check_for_existing_file(
       upload_id: existing_file.uuid,
       upload_method: UploadMethod::Unknown,
       upload_parts: None,
+      shortened_url: if existing_file.shortened.is_empty() { None } else { Some(existing_file.shortened) },
     })));
   }
 
@@ -123,5 +128,29 @@ fn get_parts_amount(file_size: u64) -> u32 {
     (chunks + 1).try_into().unwrap()
   } else {
     chunks.try_into().unwrap()
+  }
+}
+
+pub(crate) mod url_shortener {
+  use std::time::{SystemTime, UNIX_EPOCH};
+
+  const ALPHABET: &[u8; 65] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_~";
+  pub const ID_LEN:    usize = 7;
+
+  pub fn shortened_id() -> Option<String> {
+    let ms = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as u64;
+
+    let mut bytes = [0u8; ID_LEN];
+
+    let mut ts = ms;
+    for i in (0..ID_LEN).rev() {
+      bytes[i] = ALPHABET[(ts % 65) as usize];
+      ts /= 65;
+    }
+
+    String::from_utf8(bytes.to_vec()).ok()
   }
 }

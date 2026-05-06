@@ -9,4 +9,5 @@ export default interface LocalUploadState {
   status: UploadStatus | null;
   error?: string;
   localProgress: number;
+  shortened?: string;
 }

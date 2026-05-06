@@ -87,6 +87,7 @@ async fn rocket() -> _ {
         routes::index::index,
         routes::index::authorize_page,
         routes::index::file_page,
+        routes::index::file_page_short,
         routes::index::robots_txt,
         routes::index::dashboard_page,
         routes::index::dashboard_pages,

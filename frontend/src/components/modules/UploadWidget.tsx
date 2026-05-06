@@ -21,9 +21,10 @@ export function UploadWidget({ ...props }: UploadWidgetProps) {
     name: "",
     size: 0,
     type: "",
-    uploadMethod: UploadMethod.CHUNKED,
+    uploadMethod: UploadMethod.AUTOMATIC,
     expiration: 0,
     blob: null,
+    shorten: false,
   });
 
   const [isDragging, setIsDragging] = DragChecker(".upload-widget");
@@ -48,6 +49,10 @@ export function UploadWidget({ ...props }: UploadWidgetProps) {
 
   const handleUploadMethodChange = (method: UploadMethod) => {
     setFileInfo({ ...fileInfo, uploadMethod: method });
+  };
+
+  const handleShortenChange = (shorten: boolean) => {
+    setFileInfo({ ...fileInfo, shorten });
   };
 
   const handleExpirationChange = (expiration: UploadExpiration) => {
@@ -82,6 +87,9 @@ export function UploadWidget({ ...props }: UploadWidgetProps) {
       case UploadExpiration.ONE_WEEK:
         fileInfo.expiration = (Date.now() + 1000 * 60 * 60 * 24 * 7);
         break;
+      case UploadExpiration.ONE_MONTH:
+        fileInfo.expiration = (Date.now() + 1000 * 60 * 60 * 24 * 7 * 30);
+        break;
       case UploadExpiration.CUSTOM:
         fileInfo.expiration = customExpiration;
         break;
@@ -89,7 +97,7 @@ export function UploadWidget({ ...props }: UploadWidgetProps) {
     fileInfo.expiration = Math.round(fileInfo.expiration / 1000);
 
     if (props.handleUpload) {
-      props.handleUpload(fileInfo);
+      props.handleUpload({...fileInfo});
     }
   }, [fileInfo, props.handleUpload, expiration, customExpiration]);
 
@@ -126,9 +134,14 @@ export function UploadWidget({ ...props }: UploadWidgetProps) {
         </div>
         <div className="upload-options">
           <div className="upload-option-group upload-method">
-            <strong>Upload Method</strong>
+            <strong
+                className="has-answer"
+                title="How should this file be uploaded to the server. If you don't know what this is, leave the automatic. Entire -> sends the entire file at once. Chunked -> Splits the file into ~5MB chunks and sends them invidually."
+              >Upload Method
+            </strong>
             <ChipsSelect<UploadMethod>
               options={[
+                { label: "Automatic", value: UploadMethod.AUTOMATIC },
                 { label: "Entire", value: UploadMethod.ENTIRE },
                 { label: "Chunked", value: UploadMethod.CHUNKED },
               ]}
@@ -151,7 +164,7 @@ export function UploadWidget({ ...props }: UploadWidgetProps) {
           </div>
           <div className="upload-option-group upload-expiration">
             <div>
-              <strong>Expiration</strong>
+              <strong className="has-answer" title="For how long do you need to have this file here. OR When this file should be removed from the server.">Expiration</strong>
               <input
                 type="date"
                 id="uploadExpirationInput"
@@ -162,10 +175,10 @@ export function UploadWidget({ ...props }: UploadWidgetProps) {
             </div>
             <ChipsSelect<UploadExpiration>
               options={[
-                { label: "Never", value: UploadExpiration.NEVER },
                 { label: "1 hour", value: UploadExpiration.ONE_HOUR },
                 { label: "1 day", value: UploadExpiration.ONE_DAY },
                 { label: "1 week", value: UploadExpiration.ONE_WEEK },
+                { label: "1 month", value: UploadExpiration.ONE_MONTH },
                 {
                   label: `${
                     expiration === UploadExpiration.CUSTOM ? new Date(customExpiration).toLocaleDateString() : "Custom"
@@ -178,11 +191,22 @@ export function UploadWidget({ ...props }: UploadWidgetProps) {
               onChange={(selected) => handleExpirationChange(selected[0] as UploadExpiration)}
             />
           </div>
-          <div className="upload-options-group upload-submit">
-            <Button variant="primary" onClick={handleUploadClick}>
-              Upload
-            </Button>
+          <div className="upload-option-group upload-shorten">
+            <strong className="has-answer" title="Makes the link you copy shorter. Use when needed, it's not short by default for a reason.">Short link</strong>
+            <ChipsSelect<boolean>
+                options={[
+                  { label: "Long is fine", value: false },
+                  { label: "Shorten it please", value: true },
+                ]}
+                value={fileInfo.shorten}
+                onChange={(selected) => handleShortenChange(selected[0])}
+            />
           </div>
+        </div>
+        <div className="upload-options-group upload-submit">
+          <Button variant="primary" onClick={handleUploadClick}>
+            Upload
+          </Button>
         </div>
       </div>
     </div>

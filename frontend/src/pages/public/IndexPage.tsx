@@ -10,6 +10,11 @@ export default function IndexPage() {
 	const [focused, setFocused] = React.useState(false);
 	const authorizeButton = React.useRef<Component>(null);
 
+	const infoParam = new URL(window.location.href).searchParams.get("info");
+	const infoBox = infoParam ?
+		<div className={"warn"}>{infoParam}</div>
+	 : null
+
 	React.useEffect(() => {
 		const tryFocus = () => {
 			if (authorizeButton.current && !focused && authorizeButton.current.base) {
@@ -27,6 +32,8 @@ export default function IndexPage() {
 			<Suspense fallback={null}>
 				<IndexDecorations />
 			</Suspense>
+			{infoBox}
+
 			<h1>RIST server</h1>
 			<p>
 				A Rust-powered, private, open-source, self-hosted file-sharing solution

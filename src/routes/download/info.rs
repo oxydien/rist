@@ -1,7 +1,7 @@
 use rocket::{data::ToByteUnit, http::Status};
 use serde::Serialize;
 
-use crate::{db::file::FileState, file_type::FileType, routes::upload::{part::CHUNK_SIZE, UploadMethod}, state::State};
+use crate::{db::file::FileState, file_type::FileType, get_state, routes::upload::{part::CHUNK_SIZE, UploadMethod}, state::State};
 
 use super::{DownloadError, DownloadErrorKind};
 
@@ -16,19 +16,10 @@ pub struct DownloadFileInfo {
   pub ready: bool,
 }
 
-pub async fn get_file_download_info(uuid: &str) -> Result<DownloadFileInfo, DownloadError> {
-  let state = match State::get().await {
-    Ok(state) => state,
-    Err(_) => {
-      return Err(DownloadError {
-        status: Status::InternalServerError,
-        kind: DownloadErrorKind::InternalError,
-        message: String::from("Internal state error"),
-      });
-    }
-  };
+pub async fn get_file_download_info(search_query: &str) -> Result<DownloadFileInfo, DownloadError> {
+  let state = get_state!();
 
-  let output = state.file_db.get_by_uuid(uuid).await;
+  let output = state.file_db.get_by_uuid_or_shortened(search_query).await;
 
   let info: DownloadFileInfo = match output {
     Ok(db_file) => match db_file {

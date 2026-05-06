@@ -5,7 +5,7 @@ use std::path::Path;
 
 use crate::file_type::FileType;
 use crate::{routes::upload::UploadMethod, state, utils};
-
+use crate::routes::upload::request::url_shortener::ID_LEN;
 use super::utils::ensure_table_schema;
 use super::TableColumn;
 
@@ -92,6 +92,11 @@ impl FileDB {
         data_type: "VARCHAR",
         default_value: None,
       },
+      TableColumn {
+        name: "shortened",
+        data_type: "VARCHAR(15)",
+        default_value: None
+      },
     ];
 
     ensure_table_schema(&pool, "Files", &table_columns).await?;
@@ -109,8 +114,9 @@ impl FileDB {
     file_size: u64,
     expires_at: u64,
     upload_method: UploadMethod,
+    shortened: Option<String>
   ) -> Result<(), sqlx::Error> {
-    self.add_and_get_from_request(uuid, file_name, file_size, expires_at, upload_method, false).await.map(|_| ())
+    self.add_and_get_from_request(uuid, file_name, file_size, expires_at, upload_method, shortened, false).await.map(|_| ())
   }
 
   pub async fn add_and_get_from_request(
@@ -120,6 +126,7 @@ impl FileDB {
     file_size: u64,
     expires_at: u64,
     upload_method: UploadMethod,
+    shortened: Option<String>,
     get: bool
   ) -> Result<Option<File>, sqlx::Error> {
     let state = state::State::get()
@@ -128,7 +135,9 @@ impl FileDB {
 
     let path = format!("{}{}", state.config.upload.upload_location, uuid);
 
-    let result = sqlx::query("INSERT INTO Files (uuid, path, hash, name, size, created, expires_at, access_count, upload_method, file_state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    let result = sqlx::query("INSERT INTO Files \
+    (uuid, path, hash, name, size, created, expires_at, access_count, upload_method, file_state, shortened) \
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
             .bind(uuid)
             .bind(path)
             .bind("-")
@@ -139,6 +148,7 @@ impl FileDB {
             .bind(0)// access_count
             .bind(upload_method.as_u8()) 
             .bind(FileState::AwaitingData.as_u8())
+            .bind(shortened.unwrap_or(String::new()))
             .execute(&self.pool) 
             .await
             .map(|_| ());
@@ -155,11 +165,28 @@ impl FileDB {
     }
   }
 
+  pub async fn get_by_uuid_or_shortened(&self, search_query: &str) -> Result<Option<File>, sqlx::Error> {
+    if search_query.len() > ID_LEN {
+      return self.get_by_uuid(search_query).await
+    }
+    self.get_by_shortened(search_query).await
+  }
+
   pub async fn get_by_uuid(&self, uuid: &str) -> Result<Option<File>, sqlx::Error> {
     sqlx::query_as::<_, File>("SELECT * FROM Files WHERE uuid = ?")
       .bind(uuid)
       .fetch_optional(&self.pool)
       .await
+  }
+
+  pub async fn get_by_shortened(&self, shortened: &str) -> Result<Option<File>, sqlx::Error> {
+    if shortened.len() == 0 {
+      return Ok(None)
+    }
+    sqlx::query_as::<_, File>("SELECT * FROM Files WHERE shortened = ?")
+        .bind(shortened)
+        .fetch_optional(&self.pool)
+        .await
   }
 
   pub async fn get_by_hash(&self, hash: &str) -> Result<Option<File>, sqlx::Error> {
@@ -184,7 +211,8 @@ impl FileDB {
          access_count = ?, \
          file_state = ?, \
          upload_method = ?, \
-         file_type = ? \
+         file_type = ?, \
+         shortened = ? \
          WHERE uuid = ?"
     )
     .bind(file.hash)
@@ -197,6 +225,7 @@ impl FileDB {
     .bind(file.state.as_u8())
     .bind(file.upload_method.as_u8())
     .bind(file.file_type.map(|f| f.to_mime_type()).unwrap_or("".to_string()))
+    .bind(file.shortened)
     .bind(uuid)
     .execute(&self.pool)
     .await
@@ -258,6 +287,8 @@ pub struct File {
   pub state: FileState,
   pub upload_method: UploadMethod,
   pub file_type: Option<FileType>,
+  /// If empty, there is no shortened URL
+  pub shortened: String,
 }
 
 impl FromRow<'_, SqliteRow> for File {
@@ -275,6 +306,7 @@ impl FromRow<'_, SqliteRow> for File {
       state: FileState::from_u8(row.get(9)),
       upload_method: UploadMethod::from_u8(row.get(10)),
       file_type: FileType::from_mime_type(&row.try_get::<&str, usize>(11).unwrap_or("")),
+      shortened: row.get(12),
     })
   }
 }

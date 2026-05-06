@@ -47,8 +47,10 @@ export default function DownloadPage() {
 	// Effect to initialize UUID from URL - runs once
 	useEffect(() => {
 		const url = new URL(window.location.href);
-		const urlUuid =
-			url.searchParams.get("u") || url.searchParams.get("uuid") || "";
+		const urlUuid = url.searchParams.get("u")
+			|| url.searchParams.get("uuid")
+			|| url.pathname.substring(3)
+			|| "";
 		setMaxRetries(Number.parseInt(url.searchParams.get("retry") || "3", 10));
 
 		if (!urlUuid) {
@@ -102,14 +104,14 @@ export default function DownloadPage() {
 
 				if (localDownloadMethod === UploadMethod.ENTIRE) {
 					setVerbose(`Downloading entire file: \n${uuid}`);
-					downloadPromise = DownloadEntireFile(uuid, onProgress);
+					downloadPromise = DownloadEntireFile(fileInfo.uuid, onProgress);
 				} else if (
 					localDownloadMethod === UploadMethod.CHUNKED &&
 					fileInfo.parts
 				) {
 					setVerbose(`Downloading chunked file: \n${uuid}`);
 					downloadPromise = ChunkedDownload(
-						uuid,
+						fileInfo.uuid,
 						fileInfo.parts,
 						onProgress,
 						abortController.signal,
@@ -172,7 +174,7 @@ export default function DownloadPage() {
 				</p>
 			)}
 			<p className="verbose">{verbose}</p>
-			{error && <p className="error">{String(error)}</p>}
+			{error && <p className="error">{String(error)}<br/><a href="/">Go back home!</a></p>}
 			{info && (
 				<div className="file-info">
 					<p>

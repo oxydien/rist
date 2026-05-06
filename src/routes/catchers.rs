@@ -1,12 +1,20 @@
-use rocket::{http::ContentType, Request};
+use rocket::response::Redirect;
+use rocket::Request;
+
+#[derive(Responder)]
+pub enum CatcherResponse {
+  #[response(content_type = "json")]
+  Api(String),
+  #[response(status = 302)]
+  Redirect(Redirect)
+}
 
 #[catch(404)]
-pub fn not_found(req: &Request) -> (ContentType, String) {
+pub fn not_found(req: &Request) -> CatcherResponse {
   match req.routed_segment(0).ok_or("No segments") {
     Ok(segment) => {
       if segment == "api" {
-        return (
-          ContentType::JSON,
+        return CatcherResponse::Api(
           r#"{"status": 404, "error": "Not found"}"#.to_string(),
         );
       }
@@ -14,20 +22,15 @@ pub fn not_found(req: &Request) -> (ContentType, String) {
     Err(_) => {}
   }
 
-  // Redirect to index (bit bad...)
-  (
-    ContentType::HTML,
-    r#"<html><head><meta http-equiv="refresh" content="0; url=/authorize?local=false&msg='The requested resource was not found'" /></head></html>"#.to_string(),
-  )
+  CatcherResponse::Redirect(Redirect::to(format!("/?info=Could%20not%20find%20{}", req.uri().to_string())))
 }
 
 #[catch(401)]
-pub fn unauthorized(req: &Request) -> (ContentType, String) {
+pub fn unauthorized(req: &Request) -> CatcherResponse {
   match req.routed_segment(0).ok_or("No segments") {
     Ok(segment) => {
       if segment == "api" {
-        return (
-          ContentType::JSON,
+        return CatcherResponse::Api(
           r#"{"status": 401, "error": "Unauthorized"}"#.to_string(),
         );
       }
@@ -35,9 +38,5 @@ pub fn unauthorized(req: &Request) -> (ContentType, String) {
     Err(_) => {}
   }
 
-  // Redirect to index (bit bad...)
-  (
-    ContentType::HTML,
-    r#"<html><head><meta http-equiv="refresh" content="0; url=/authorize?local=false&msg='You don't have access for this page, try logging in'" /></head></html>"#.to_string(),
-  )
+  CatcherResponse::Redirect(Redirect::to("/?local=false&msg='You don't have access for this page, try logging in'".to_string()))
 }

@@ -216,6 +216,22 @@ pub async fn file_page<'r, 'o: 'r>(
   headers: RequestHeaders<'o>,
   u: Option<&str>,
 ) -> Result<FilePageResponse, Status> {
+  all_file_page(headers, u).await
+}
+
+#[get("/f/<u>")]
+pub async fn file_page_short<'r, 'o: 'r>(
+  _brl: RocketGovernor<'r, RelaxedRateLimitGuard>,
+  headers: RequestHeaders<'o>,
+  u: Option<&str>,
+) -> Result<FilePageResponse, Status> {
+  all_file_page(headers, u).await
+}
+
+pub async fn all_file_page<'r>(
+  headers: RequestHeaders<'r>,
+  u: Option<&str>,
+) -> Result<FilePageResponse, Status> {
   let uuid = u;
 
   // Check if headers include (content-type = octet-stream)
@@ -223,9 +239,9 @@ pub async fn file_page<'r, 'o: 'r>(
     if content_type == "application/octet-stream" {
       if let Some(uuid) = uuid {
         return download_file(uuid)
-          .await
-          .map(FilePageResponse::Raw)
-          .map_err(|_| Status::InternalServerError);
+            .await
+            .map(FilePageResponse::Raw)
+            .map_err(|_| Status::InternalServerError);
       }
     }
   }
@@ -236,49 +252,49 @@ pub async fn file_page<'r, 'o: 'r>(
   };
 
   MetaHtmlResponse::open("frontend/index.html")
-    .await
-    .map_err(|_| Status::InternalServerError)
-    .map(|res| match download_info {
-      Some(info) => {
-        let file_property = match info.file_type {
-          FileType::Audio(_) => "audio",
-          FileType::Video(_) => "video",
-          FileType::Image(_) => "image",
-          FileType::Unknown => "file",
-        };
-        res
-          .with_title(format!("File {} | {}", info.filename, get_software_name()))
-          .with_default_meta()
-          .with_meta(MetaTag {
-            name: "filename".to_string(),
-            content: info.filename,
-          })
-          .with_meta(MetaTag {
-            name: "filetype".to_string(),
-            content: info.file_type.to_mime_type(),
-          })
-          .with_meta(MetaTag {
-            name: format!("og:{}:type", file_property),
-            content: info.file_type.to_mime_type(),
-          })
-          .with_meta(MetaTag {
-            name: format!("og:{}", file_property),
-            content: format!("/api/download/raw/{}", info.uuid),
-          })
-          .with_meta(MetaTag {
-            name: format!("twitter:{}", file_property),
-            content: format!("/api/download/raw/{}", info.uuid),
-          })
-          .with_meta(MetaTag {
-            name: "twitter:card".to_string(),
-            content: "summary_large_image".to_string(),
-          })
-      }
-      None => res
-        .with_title(format!("File | {}", get_software_name()))
-        .with_default_meta(),
-    })
-    .map(FilePageResponse::Html)
+      .await
+      .map_err(|_| Status::InternalServerError)
+      .map(|res| match download_info {
+        Some(info) => {
+          let file_property = match info.file_type {
+            FileType::Audio(_) => "audio",
+            FileType::Video(_) => "video",
+            FileType::Image(_) => "image",
+            FileType::Unknown => "file",
+          };
+          res
+              .with_title(format!("File {} | {}", info.filename, get_software_name()))
+              .with_default_meta()
+              .with_meta(MetaTag {
+                name: "filename".to_string(),
+                content: info.filename,
+              })
+              .with_meta(MetaTag {
+                name: "filetype".to_string(),
+                content: info.file_type.to_mime_type(),
+              })
+              .with_meta(MetaTag {
+                name: format!("og:{}:type", file_property),
+                content: info.file_type.to_mime_type(),
+              })
+              .with_meta(MetaTag {
+                name: format!("og:{}", file_property),
+                content: format!("/api/download/raw/{}", info.uuid),
+              })
+              .with_meta(MetaTag {
+                name: format!("twitter:{}", file_property),
+                content: format!("/api/download/raw/{}", info.uuid),
+              })
+              .with_meta(MetaTag {
+                name: "twitter:card".to_string(),
+                content: "summary_large_image".to_string(),
+              })
+        }
+        None => res
+            .with_title(format!("File | {}", get_software_name()))
+            .with_default_meta(),
+      })
+      .map(FilePageResponse::Html)
 }
 
 #[get("/robots.txt")]

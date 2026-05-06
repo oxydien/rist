@@ -124,8 +124,11 @@ export async function upload(file: FileUploadInfo) {
 		throw new Error(`Upload request failed: ${errorData}`);
 	}
 
+	lus.uuid = requestResponse.upload_id;
+	lus.shortened = requestResponse.shortened_url;
+	lus.file.uploadMethod = requestResponse.upload_method;
+
 	if (!requestResponse.approved) {
-		lus.uuid = requestResponse.upload_id;
 		lus.state = FileState.Completed;
 		updateUpload(tempUuid, lus);
 		console.debug("Upload finished (denied)");
@@ -135,7 +138,6 @@ export async function upload(file: FileUploadInfo) {
 	const uploadMethod = requestResponse.upload_method;
 	const uuid = requestResponse.upload_id;
 
-	lus.uuid = uuid;
 	lus.state = FileState.Uploading;
 	updateUpload(tempUuid, lus);
 	console.debug(`Upload method: ${uploadMethod}, uuid: ${uuid}`);

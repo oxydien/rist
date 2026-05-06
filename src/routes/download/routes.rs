@@ -6,12 +6,12 @@ use crate::routes::{RelaxedRateLimitGuard, StandardRateLimitGuard};
 
 use super::{DownloadError, DownloadResponse};
 
-#[get("/api/download/info/<uuid>")]
+#[get("/api/download/info/<search_query>")]
 pub async fn get_download_info<'r>(
   _rt: RocketGovernor<'r, StandardRateLimitGuard>,
-  uuid: &str,
+  search_query: &str,
 ) -> Result<Json<Value>, DownloadError> {
-  super::info::get_file_download_info(uuid)
+  super::info::get_file_download_info(search_query)
     .await
     .map(|f| Json(json!({
       "uuid": f.uuid,
@@ -24,19 +24,19 @@ pub async fn get_download_info<'r>(
     })))
 }
 
-#[get("/api/download/raw/<uuid>")]
+#[get("/api/download/raw/<search_query>")]
 pub async fn download_entire_file<'r>(
   _rt: RocketGovernor<'r, StandardRateLimitGuard>,
-  uuid: &str,
+  search_query: &str,
 ) -> Result<DownloadResponse, DownloadError> {
-  super::file::download_file(uuid).await
+  super::file::download_file(search_query).await
 }
 
-#[get("/api/download/part/<uuid>/<part>")]
+#[get("/api/download/part/<search_query>/<part>")]
 pub async fn download_file_part<'r>(
   _rt: RocketGovernor<'r, RelaxedRateLimitGuard>,
-  uuid: &str,
+  search_query: &str,
   part: u32,
 ) -> Result<DownloadResponse, DownloadError> {
-  super::part::download_part(uuid, part).await
+  super::part::download_part(search_query, part).await
 }

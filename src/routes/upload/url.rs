@@ -36,6 +36,7 @@ pub async fn upload_from_url(
       0,
       expires_at,
       UploadMethod::Url,
+      None,
       true,
     )
     .await
@@ -148,7 +149,7 @@ pub async fn upload_from_url(
   let hash_str = hex::encode(hasher.finalize());
 
   // Detect file type
-  let file_type = FileTypeDetector::guess(&*first_chunk_buffer);
+  let file_type = FileTypeDetector::guess(&*first_chunk_buffer).unwrap_or(FileType::Unknown);
 
   let state = match State::get().await {
     Ok(state) => state,
@@ -156,7 +157,7 @@ pub async fn upload_from_url(
   };
 
   db_file.state = FileState::Completed;
-  db_file.file_type = Some(file_type.unwrap_or(FileType::Unknown));
+  db_file.file_type = Some(file_type.clone());
   db_file.hash = hash_str.clone();
   db_file.size = file_size as i64;
   db_file.path = file_path.to_string_lossy().to_string();
@@ -176,5 +177,6 @@ pub async fn upload_from_url(
     uuid,
     hash: hash_str,
     size: file_size as i64,
+    content_type: Some(file_type.to_mime_type())
   }))
 }

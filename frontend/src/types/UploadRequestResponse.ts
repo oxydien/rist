@@ -6,4 +6,5 @@ export default interface UploadRequestResponse {
   upload_method: UploadMethod;
   /// Used for chunked upload
   upload_parts?: number;
+  shortened_url?: string;
 }

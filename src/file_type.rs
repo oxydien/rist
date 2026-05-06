@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 /// Contains all the supported file types of video, image and audio.
 ///
 /// Used to determine the file type of a file, or to give information about the file to embed creators.
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum FileType {
   Audio(AudioType),
   Image(ImageType),
@@ -15,7 +15,7 @@ pub enum FileType {
   Unknown,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ImageType {
   PNG,
   JPEG,
@@ -24,7 +24,7 @@ pub enum ImageType {
   WEBP,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum VideoType {
   MP4,
   AVI,
@@ -32,7 +32,7 @@ pub enum VideoType {
   MKV,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum AudioType {
   MP3,
   AAC,

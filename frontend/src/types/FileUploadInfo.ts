@@ -7,4 +7,5 @@ export interface FileUploadInfo {
   uploadMethod: UploadMethod;
   expiration: number;
   blob: Blob | null;
+  shorten: boolean;
 }

@@ -3,7 +3,7 @@ use std::path::Path;
 use rocket::http::Status;
 use tokio::io::{AsyncReadExt, AsyncSeekExt};
 
-use crate::{db::file::FileState, file_type::FileType, routes::upload::part::CHUNK_SIZE, state::State};
+use crate::{db::file::FileState, file_type::FileType, get_state, routes::upload::part::CHUNK_SIZE, state::State};
 
 use super::{DownloadError, DownloadErrorKind, DownloadResponse};
 
@@ -14,16 +14,7 @@ use super::{DownloadError, DownloadErrorKind, DownloadResponse};
 /// - `uuid`: The UUID of the file
 /// - `part`: The part number (from 0 to the total number of parts)
 pub async  fn download_part(uuid: &str, part: u32) -> Result<DownloadResponse, DownloadError> {
-  let state = match State::get().await {
-    Ok(state) => state,
-    Err(_) => {
-      return Err(DownloadError {
-        status: Status::InternalServerError,
-        kind: DownloadErrorKind::InternalError,
-        message: String::from("Internal state error"),
-      });
-    }
-  };
+  let state = get_state!();
 
   match state.upload_status.read().await.get(uuid) {
     Some(file_status) if file_status.state == FileState::Completed => (),
@@ -106,7 +97,7 @@ pub async  fn download_part(uuid: &str, part: u32) -> Result<DownloadResponse, D
     found: true,
     finished: true,
     filename: db_file.name.clone(),
-    data: data,
+    data,
     file_type: db_file.file_type.unwrap_or(FileType::Unknown),
   };
 

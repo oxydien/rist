@@ -138,6 +138,7 @@
 	text-transform: lowercase;
 	font-weight: 500;
 	color: hsl(var(--subtext-1-color));
+	text-align: center;
 }
 
 .local-info .upload-info-main {
@@ -147,6 +148,7 @@
 	width: 100%;
 	font-size: var(--_calc-font-size);
 	font-weight: 600;
+	text-align: center;
 }
 
 .local-info .upload-uuid {

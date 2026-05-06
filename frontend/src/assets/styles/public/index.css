@@ -81,6 +81,10 @@ nav a:focus-visible {
 	overflow-wrap: break-word;
 }
 
+.error a {
+	color: var(--teal-color);
+}
+
 .warn {
 	color: hsl(var(--yellow-color));
 	background-color: hsl(var(--yellow-color) / 0.1);

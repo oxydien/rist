@@ -14,7 +14,7 @@ interface ChipsSelectProps<T> {
   disabled?: boolean;
 }
 
-function ChipsSelect<T extends string | number | object = string>({
+function ChipsSelect<T extends string | number | boolean | object = string>({
   options,
   value,
   onChange,

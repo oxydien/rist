@@ -12,7 +12,7 @@ use tokio::{
 };
 
 use crate::{db::file::FileState, file_type::FileTypeDetector, state::State};
-
+use crate::file_type::FileType;
 use super::{
   error::{UploadError, UploadErrorKind},
   UploadMethod, UploadResponse,
@@ -202,15 +202,17 @@ pub async fn upload_part(
   if status.parts.unwrap().0 == status.parts.unwrap().1 {
     status.state = FileState::Finishing;
     drop(status_guard);
+
     println!("[DEV  ] Finishing upload: {}-{}", uuid_raw, part_number);
 
     match finish_upload(uuid_raw.clone()).await {
-      Ok((hash, size)) => {
+      Ok((hash, size, file_type)) => {
         println!("[DEV  ] Finished upload: {}-{}", uuid_raw, part_number);
         Ok(Json(UploadResponse {
           uuid: uuid_raw,
           hash,
           size: size as i64,
+          content_type: file_type.map(|f| f.to_mime_type()),
         }))
       }
       Err(e) => {
@@ -224,6 +226,7 @@ pub async fn upload_part(
       uuid: uuid_raw,
       hash: String::new(), // Empty until finished
       size: status.uploaded_bytes as i64,
+      content_type: None
     }))
   }
 }
@@ -239,7 +242,7 @@ pub async fn upload_part(
 /// - Tries to clean up the temp directory
 /// - Update the file state in the database
 /// - Return the final hash and total size of the file
-async fn finish_upload(uuid_raw: String) -> Result<(String, u64), UploadError> {
+async fn finish_upload(uuid_raw: String) -> Result<(String, u64, Option<FileType>), UploadError> {
   let state = State::get().await.map_err(|_| UploadError::state_error())?;
 
   // Setup paths
@@ -267,8 +270,7 @@ async fn finish_upload(uuid_raw: String) -> Result<(String, u64), UploadError> {
       kind: UploadErrorKind::ServerIssue,
       status: Status::InternalServerError,
       message: Some("Failed to get file from DB".to_string()),
-    })
-    .unwrap()
+    })?
   {
     Some(file) => file,
     None => {
@@ -398,11 +400,13 @@ async fn finish_upload(uuid_raw: String) -> Result<(String, u64), UploadError> {
   println!("[DEV  ] Detecting file type for: {}", uuid_raw);
   let file_type = FileTypeDetector::guess(first_part_buffer.as_slice());
 
+  let content_type = file_type.ok();
+
   db_file.state = FileState::Completed;
   db_file.hash = hash_str.clone();
   db_file.size = total_size as i64;
   db_file.path = file_path.to_string_lossy().to_string();
-  db_file.file_type = file_type.map(|f| Some(f)).unwrap_or(None);
+  db_file.file_type = content_type.clone();
 
   println!(
     "[DEV  ] Final state: hash={}, size={}, type={:?}; for: {}",
@@ -421,8 +425,7 @@ async fn finish_upload(uuid_raw: String) -> Result<(String, u64), UploadError> {
         status: Status::InternalServerError,
         message: Some("Failed to update file in DB".to_string()),
       }
-    })
-    .unwrap();
+    })?;
 
-  Ok((hash_str, total_size))
+  Ok((hash_str, total_size, content_type))
 }

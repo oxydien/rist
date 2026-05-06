@@ -1,12 +1,12 @@
 import type LocalUploadState from "../../types/LocalUploadState";
 import "../../assets/styles/private/uploaditem.css";
 import Button from "../common/Button";
-import { uploadMethodToString } from "../../types/UploadMethod";
+import {uploadMethodToString} from "../../types/UploadMethod";
 import formatDate from "../../utils/date";
-import { formatBytes } from "../../utils/math/bytes";
-import FileState, { fileStateToString } from "../../types/FileState";
-import { getIcon } from "../../utils/iconReg";
-import { useCallback, useState } from "preact/hooks";
+import {formatBytes} from "../../utils/math/bytes";
+import FileState, {fileStateToString} from "../../types/FileState";
+import {getIcon} from "../../utils/iconReg";
+import {useCallback, useState} from "preact/hooks";
 
 interface UploadItemProps {
 	lus: LocalUploadState;
@@ -95,8 +95,7 @@ export const UploadItem = ({ lus, onCancel }: UploadItemProps) => {
 
 	const getUrl: () => string = () => {
 		if (!lus.uuid) return "";
-		const url = `${window.location.protocol}//${window.location.host}/f?u=${lus.uuid}`;
-		return url;
+		return `${window.location.protocol}//${window.location.host}/f/${lus.shortened || lus.uuid}`;
 	};
 
 	const [copied, setCopied] = useState(false);
@@ -118,7 +117,7 @@ export const UploadItem = ({ lus, onCancel }: UploadItemProps) => {
 	}, [lus.uuid, copied]);
 
 	return (
-		<div className="upload-item">
+		<div className="upload-item" data-uuid={lus.uuid}>
 			<div className="upload-state">
 				<div
 					className="progress"
@@ -156,7 +155,7 @@ export const UploadItem = ({ lus, onCancel }: UploadItemProps) => {
 							className="upload-expiration-header"
 							title={new Date(lus.file.expiration * 1000).toLocaleString()}
 						>
-							Expiration:{" "}
+							Expires:{" "}
 							{showUUID &&
 								(lus.file.expiration === 0
 									? "never"
@@ -168,7 +167,7 @@ export const UploadItem = ({ lus, onCancel }: UploadItemProps) => {
 					</div>
 					<div className="upload-info-main">
 						{showUUID ? (
-							<div className="upload-uuid">{lus.uuid}</div>
+							<div className="upload-uuid">{ lus.shortened || lus.uuid }</div>
 						) : (
 							<>
 								<div className="upload-method">

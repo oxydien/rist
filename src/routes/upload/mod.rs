@@ -116,6 +116,8 @@ pub struct UploadRequest {
   pub file_name: String,
   pub file_hash: String,
   pub expires_at: u64,
+  #[serde(default)]
+  pub shorten: bool,
 }
 
 #[derive(Serialize)]
@@ -124,6 +126,7 @@ pub struct UploadRequestResponse {
   pub upload_id: String,
   pub upload_method: UploadMethod,
   pub upload_parts: Option<u32>,
+  pub shortened_url: Option<String>,
 }
 
 pub type UploadStatusMap = Arc<RwLock<HashMap<String, UploadStatus>>>;
@@ -133,4 +136,5 @@ pub struct UploadResponse {
   pub uuid: String,
   hash: String,
   size: i64,
+  content_type: Option<String>,
 }

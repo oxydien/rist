@@ -51,7 +51,7 @@ export function App() {
 	if (currentPath.includes("authorize")) {
 		return <AuthorizePage />;
 	}
-	if (currentPath === "/f") {
+	if (currentPath.startsWith("/f")) {
 		return <DownloadPage />;
 	}
 

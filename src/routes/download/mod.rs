@@ -1,12 +1,8 @@
-use std::{
-  fs::{self},
-  io::Cursor,
-  path::Path,
-};
+use std::io::Cursor;
 
 use rocket::{
   http::Status,
-  response::{self, content::RawHtml},
+  response::{self},
   serde::json::Json,
   Request, Response,
 };
@@ -56,20 +52,21 @@ impl DownloadResponse {
   }
 }
 
-// TODO: Rewrite
 #[rocket::async_trait]
 impl<'r, 'o: 'r> response::Responder<'r, 'o> for DownloadResponse {
-  fn respond_to(self, req: &Request) -> rocket::response::Result<'o> {
+  fn respond_to(self, _: &Request) -> rocket::response::Result<'o> {
     if !self.found {
-      let path = Path::new("frontend/404.html");
-      let content = fs::read_to_string(path).unwrap();
-      return Ok(RawHtml(content).respond_to(req).unwrap());
+      let mut res = Response::new();
+      res.set_raw_header("Location", format!("/?info=Could%20not%20find%20%20{}", self.filename));
+      res.set_status(Status::Found);
+      return Ok(res);
     }
 
     if !self.finished {
-      let path = Path::new("frontend/unfinished.html");
-      let content = fs::read_to_string(path).unwrap();
-      return Ok(RawHtml(content).respond_to(req).unwrap());
+      let mut res = Response::new();
+      res.set_raw_header("Location", format!("/?info=File%20not%20finished%20uploading%20{}", self.filename));
+      res.set_status(Status::SeeOther);
+      return Ok(res);
     }
 
     let mut res = Response::new();
@@ -88,8 +85,24 @@ impl<'r, 'o: 'r> response::Responder<'r, 'o> for DownloadResponse {
 #[rocket::async_trait]
 impl<'r, 'o: 'r> response::Responder<'r, 'o> for DownloadError {
   fn respond_to(self, req: &Request) -> rocket::response::Result<'o> {
-    let mut res = Json(&self).respond_to(req).unwrap();
+    let mut res = Json(&self).respond_to(req)?;
     res.set_status(self.status);
     Ok(res)
+  }
+}
+
+#[macro_export]
+macro_rules! get_state {
+  () => {
+    match State::get().await {
+      Ok(state) => state,
+      Err(_) => {
+        return Err(DownloadError {
+          status: Status::InternalServerError,
+          kind: DownloadErrorKind::InternalError,
+          message: String::from("Internal state error"),
+        });
+      }
+    }
   }
 }
