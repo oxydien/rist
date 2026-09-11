@@ -1,0 +1,5 @@
+
+.center-head {
+    text-align: center;
+    margin-block: var(--gap-sm);
+}

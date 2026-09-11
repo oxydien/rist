@@ -1,0 +1,26 @@
+.carousel-wrapper {
+    position: relative;
+}
+
+.carousel-items {
+    position: relative;
+    display: flex;
+    flex-flow: row nowrap;
+    overflow: hidden;
+    height: 100%;
+}
+
+.carousel-items.animated {
+    transition: all 250ms;
+}
+
+.carousel-items > * {
+    position: absolute;
+    min-width: var(--_item-width);
+    width: var(--_item-width);
+    max-width: var(--_item-width);
+}
+
+.carousel-items.animated > * {
+    transition: all 250ms;
+}

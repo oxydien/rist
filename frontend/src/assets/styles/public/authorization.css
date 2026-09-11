@@ -1,0 +1,55 @@
+@import "fonts.css";
+
+main.authorize-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--gap-sm);
+    min-height: 100%;
+    min-height: 100svh;
+    max-width: 550px;
+    text-align: center;
+    padding-inline: 30px;
+    margin-inline: auto;
+    opacity: 1 !important;
+}
+
+.authorize-page h1 {
+    color: hsl(var(--brand-color));
+    font-size: clamp(1.8rem, 6vw, 3.2rem);
+    font-weight: 900;
+    text-align: center;
+    font-variant: small-caps;
+    text-transform: lowercase;
+}
+
+.authorize-page p {
+    font-size: 1.2rem;
+    padding-block: 0 1rem;
+}
+
+body:has(.authorize-page)>div {
+    background:
+            radial-gradient(ellipse at bottom, hsl(var(--brand-color) / 40%), hsl(var(--crust-color)) 80%) !important;
+}
+
+.authorize-page input {
+    box-shadow: 0 0 8px hsl(var(--crust-color));
+}
+
+.authorize-page .error {
+    color: hsl(var(--maroon-color));
+    background-color: hsl(var(--maroon-color) / 0.1);
+    border-radius: var(--radius-md);
+    padding: var(--gap-sm) var(--gap-md);
+    margin-top: var(--gap-md);
+    text-align: center;
+    width: 100%;
+    overflow-wrap: break-word;
+    font-weight: 700;
+}
+
+.authorize-page .error a {
+    color: var(--teal-color);
+}

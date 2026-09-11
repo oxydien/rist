@@ -28,7 +28,8 @@ export default function DownloadPage() {
 
 	const fileSizeRef = useRef<number | null>(null);
 
-	import("../../assets/styles/public/index.css");
+	import("../../assets/styles/public/common.css");
+	import("../../assets/styles/public/download.css");
 
 	const onProgress = useCallback((progress: DownloadProgress) => {
 		if (fileSizeRef.current === null) return;
@@ -168,7 +169,7 @@ export default function DownloadPage() {
 		<main>
 			<h1>{status}</h1>
 			{blobUrl === "" && (
-				<p>
+				<p className={"bg-info"}>
 					The file is being downloaded in the background, when it's done you'll
 					be asked to select where to save it.
 				</p>

@@ -9,3 +9,6 @@ config.json
 .venv
 log.txt
 .cargo
+*.db
+*.db-wal
+*/bun.lock

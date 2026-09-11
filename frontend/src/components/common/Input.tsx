@@ -1,7 +1,7 @@
-import type React from "preact/compat";
-import "../../assets/styles/common/input.css"
+import {InputHTMLAttributes, TargetedEvent} from "preact";
+import "../../assets/styles/common/input.css";
 
-interface InputProps {
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   variant?: "default" | "primary" | "destructive";
   disabled?: boolean;
   type?: "text" | "number" | "email" | "password";
@@ -9,16 +9,16 @@ interface InputProps {
   placeholder?: string;
   className?: string;
   value?: string;
-  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onKeyUp?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  onChange?: (event: TargetedEvent<HTMLInputElement>) => void;
+  onKeyUpCapture?: (event: KeyboardEvent) => void;
 }
 
-const Input: React.FC<InputProps> = ({
+export default function Input({
   className = "",
   variant = "default",
   value,
   ...props
-}) => {
+}: InputProps) {
   const buttonClass = `input input-${variant}`;
 
   return (
@@ -26,9 +26,8 @@ const Input: React.FC<InputProps> = ({
       className={buttonClass}
       value={value}
       onChange={props.onChange}
+      onKeyUpCapture={props.onKeyUpCapture}
       {...props}
     />
   );
 };
-
-export default Input;

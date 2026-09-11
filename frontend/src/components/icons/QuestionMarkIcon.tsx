@@ -1,4 +1,4 @@
-import type { SVGProps } from "react";
+import type { SVGProps } from "preact/compat";
 
 export default function QuestionMarkIcon(props: SVGProps<SVGSVGElement>) {
   return (

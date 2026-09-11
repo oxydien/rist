@@ -48,3 +48,20 @@
   --_focus-outline-color: hsl(var(--surface-1-color));
   --_focus-text-color: hsl(var(--maroon-color));
 }
+
+.labeled-input {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-between;
+  align-items: end;
+  width: 100%;
+}
+
+.labeled-input input {
+  width: 100%;
+}
+
+.labeled-input .input-note {
+  font-size: 0.6rem;
+  color: hsl(var(--brand-color));
+}

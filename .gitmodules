@@ -1,0 +1,3 @@
+[submodule "chat"]
+	path = chat
+	url = git@github.com:oxydien/rist-chat

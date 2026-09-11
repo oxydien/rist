@@ -15,6 +15,7 @@ pub mod medal;
 pub mod server_info;
 pub mod upload;
 pub mod youtube;
+pub mod chat;
 
 pub struct TokenAuth(User);
 

@@ -12,6 +12,7 @@ interface ChipsSelectProps<T> {
   value?: T;
   onChange?: (selected: T[]) => void;
   disabled?: boolean;
+  className?: string;
 }
 
 function ChipsSelect<T extends string | number | boolean | object = string>({
@@ -19,6 +20,7 @@ function ChipsSelect<T extends string | number | boolean | object = string>({
   value,
   onChange,
   disabled = false,
+  className,
 }: ChipsSelectProps<T>) {
   import("../../assets/styles/common/chipsselect.css");
 
@@ -42,7 +44,7 @@ function ChipsSelect<T extends string | number | boolean | object = string>({
   );
 
   return (
-    <div className="chips-select">
+    <div className={`chips-select ${className || ""}`}>
       {options.map((option) => (
         <Button
           key={typeof option.value === "object" ? JSON.stringify(option.value) : String(option.value)}

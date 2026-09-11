@@ -1,4 +1,4 @@
-import type { SVGProps } from "react";
+import type { SVGProps } from "preact/compat";
 
 export default function FileTimeIcon(props: SVGProps<SVGSVGElement>) {
   return (

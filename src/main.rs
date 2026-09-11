@@ -4,6 +4,7 @@ use rocket_cors::{AllowedOrigins, CorsOptions};
 use rocket_governor::rocket_governor_catcher;
 use state::State;
 use utils::get_software_name;
+use crate::routes::chat::ChatState;
 
 #[macro_use]
 extern crate rocket;
@@ -52,6 +53,11 @@ async fn rocket() -> _ {
 
     allow_cors = state.config.server.allow_all_origins.clone();
   }
+
+  {
+    ChatState::init().await.unwrap();
+  }
+  
   log_d!("Starting background worker...");
   background_worker::init().unwrap();
 
@@ -105,6 +111,7 @@ async fn rocket() -> _ {
         routes::youtube::youtube_request,
         routes::youtube::youtube_download,
         routes::medal::download_medal_clip,
+        routes::chat::chat_websocket_gateway,
       ],
     );
 

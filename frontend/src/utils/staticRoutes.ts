@@ -9,6 +9,7 @@ export const routes = {
   DOWNLOAD_INFO: "/api/download/info/<uuid>",
   DOWNLOAD_ENTIRE: "/api/download/raw/<uuid>",
   DOWNLOAD_PART: "/api/download/part/<uuid>/<part_number>",
+  CHAT_WS: "/api/chat/ws?b=default",
 };
 
 export const moduleRoutes: { [key: string]: string } = {};

@@ -1,0 +1,73 @@
+@font-face {
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../../fonts/Poppins-Bold.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+body {
+    font-family: var(--font-family);
+    margin: 0;
+    font-size: 14px;
+    color: hsl(var(--subtext-0-color));
+    background-color: hsl(var(--crust-color));
+    min-height: 100%;
+}
+
+* {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
+nav {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--gap-md);
+    margin-top: var(--gap-md);
+    width: 100%;
+}
+
+nav input {
+    width: calc(70% - var(--gap-md));
+    padding: var(--gap-md) !important;
+}
+
+nav button {
+    width: 30%;
+    padding: var(--gap-md) var(--gap-lg) !important;
+}
+
+nav a {
+    padding: var(--gap-md) var(--gap-lg) !important;
+}
+
+nav a:focus-visible {
+    transition: outline 400ms ease-in-out;
+    outline: 4px solid hsl(var(--brand-color)) !important;
+}
+
+.warn {
+    color: hsl(var(--yellow-color));
+    background-color: hsl(var(--yellow-color) / 0.1);
+    border-radius: var(--radius-md);
+    padding: var(--gap-sm) var(--gap-md);
+    margin-top: var(--gap-md);
+    text-align: center;
+    width: 100%;
+    overflow-wrap: break-word;
+    margin-bottom: var(--gap-sm);
+}
+
+@media screen and (max-width: 600px) {
+    nav {
+        flex-direction: column;
+    }
+    nav button,
+    nav input {
+        width: 100%;
+    }
+}

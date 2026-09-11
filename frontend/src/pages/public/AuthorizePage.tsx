@@ -5,11 +5,13 @@ import { authorize } from "../../utils/comm/auth";
 import type { Component } from "preact";
 
 export default function AuthorizePage() {
-	import("../../assets/styles/public/index.css");
+	import("../../assets/styles/public/common.css");
+	import("../../assets/styles/public/authorization.css");
 
 	const [tokenVal, setTokenVal] = useState("");
 	const [error, setError] = useState("");
 	const [warn, setWarn] = useState("");
+	const [isInProgress, setIsInProgress] = useState(false);
 	const [redirect, setRedirect] = useState("/dash/");
 
 	const [focused, setFocused] = useState(false);
@@ -40,29 +42,40 @@ export default function AuthorizePage() {
 
 	const handleFormSubmit = async (event?: MouseEvent) => {
 		event?.preventDefault();
-		if (tokenVal) {
-			authorize(tokenVal)
-				.then((res) => {
-					console.debug(res);
-					window.location.href = redirect;
-				})
-				.catch((error) => {
-					console.error("Error while authorizing", error);
-					setError(error);
-				});
+		if (!tokenVal) {
+			try {
+				setTokenVal(await window.navigator.clipboard.readText());
+			} catch (_) {
+				// Ignored: The website is not secured
+				return;
+			}
 		}
+
+		setIsInProgress(true);
+		authorize(tokenVal)
+			.then((res) => {
+				console.debug(res);
+				window.location.href = redirect;
+			})
+			.catch((error) => {
+				console.error("Error while authorizing", error);
+				setError(error);
+			}).finally(() => {
+				setIsInProgress(false);
+			});
 	};
 
 	const errorElement = error ? <p className="error">{String(error)}</p> : null;
 	const warnElement = warn ? <p className="warn">{String(warn)}</p> : null;
 
 	return (
-		<main>
+		<main className={"authorize-page"}>
 			<h1>Authorize</h1>
 			{warnElement}
 			<p>
-				To use this private RIST server, you'll need an access token provided by
-				the server owner. Paste the token below and click "Authorize."
+				To access the private section of this server, you need a token provided by
+				the server owner. <br/>
+				Paste the token below and click "<em>Authorize</em>."
 			</p>
 			{errorElement}
 			<nav>
@@ -79,8 +92,8 @@ export default function AuthorizePage() {
 						}
 					}}
 				/>
-				<Button variant="primary" type="submit" onClick={handleFormSubmit}>
-					Authorize
+				<Button variant="primary" type="submit" onClick={handleFormSubmit} disabled={isInProgress}>
+					{ (isInProgress ? "Loading..." : "Authorize") }
 				</Button>
 			</nav>
 		</main>

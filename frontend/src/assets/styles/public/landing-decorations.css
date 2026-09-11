@@ -1,0 +1,119 @@
+@import "fonts.css";
+
+.index-page p em {
+    position: relative;
+    font-weight: 400;
+}
+
+.index-page p em::after {
+    content: "";
+    display: inline;
+    position: absolute;
+    width: 100%;
+    left: 0;
+    top: 80%;
+    height: 30px;
+    background-image: url("../../patterns/underline.svg");
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.index-decorations {
+    z-index: -1;
+}
+
+.index-decorations-background {
+    position: absolute;
+    inset: 0;
+    background-image: url("../../patterns/landing-primary.png?");
+    background-size: 20px;
+
+    background-position: calc(var(--offset-x) / 30) calc(var(--offset-y) / 30);
+    transition: background-position 50ms ease;
+}
+
+.index-decorations-beat {
+    --_clr-ray: hsl(var(--brand-color) / 5%);
+    --_clr-empty: transparent;
+
+    position: absolute;
+    inset: 0;
+
+    background: linear-gradient(
+            35deg,
+            var(--_clr-empty) 0%,
+            var(--_clr-empty) calc(var(--_ray-offset) - 5%),
+            var(--_clr-ray) var(--_ray-offset),
+            var(--_clr-empty) calc(var(--_ray-offset) + 5%),
+            var(--_clr-empty) 100%
+    );
+
+    animation: linPulse 10s cubic-bezier(0, 0.3, 1, 0.7) infinite;
+}
+
+.index-decorations-spotlight {
+    position: absolute;
+    inset: 0;
+
+    --_clr-light: hsl(var(--brand-color) / 10%);
+    --_clr-empty: transparent;
+    --_clr-dark: black;
+
+    background: radial-gradient(
+            circle at var(--_spotlight-x) var(--_spotlight-y),
+            var(--_clr-light),
+            var(--_clr-light) 40%,
+            var(--_clr-empty) 50%,
+            var(--_clr-dark) 100%
+    );
+
+    animation: spotlightShake 10s ease infinite;
+}
+
+@property --_ray-offset {
+    syntax: '<percentage>';
+    inherits: false;
+    initial-value: -5%;
+}
+
+@keyframes linPulse {
+    0% {
+        --_ray-offset: -10%;
+    }
+    10% {
+        --_ray-offset: -10%;
+    }
+    30% {
+        --_ray-offset: 110%;
+    }
+    60% {
+        --_ray-offset: 110%;
+    }
+    80% {
+        --_ray-offset: -10%;
+    }
+    100% {
+        --_ray-offset: -10%;
+    }
+}
+
+@property --_spotlight-x {
+    syntax: '<percentage>';
+    inherits: false;
+    initial-value: 50%;
+}
+@property --_spotlight-y {
+    syntax: '<percentage>';
+    inherits: false;
+    initial-value: 50%;
+}
+
+@keyframes spotlightShake {
+    0%, 100% { --_spotlight-x: 50%; --_spotlight-y: 50%; }
+    10%      { --_spotlight-x: 51.5%; --_spotlight-y: 49%; }
+    25%      { --_spotlight-x: 49%;   --_spotlight-y: 51%; }
+    40%      { --_spotlight-x: 51%;   --_spotlight-y: 51.5%; }
+    55%      { --_spotlight-x: 48.5%; --_spotlight-y: 49.5%; }
+    70%      { --_spotlight-x: 50.5%; --_spotlight-y: 50.5%; }
+    85%      { --_spotlight-x: 49.5%; --_spotlight-y: 48.5%; }
+}
